@@ -13,6 +13,8 @@ def ensure_output_dir():
     """Create output directories if they don't exist."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(SITE_DIR, exist_ok=True)
+    # Ensure .nojekyll exists so GitHub Pages serves raw HTML cleanly
+    open(os.path.join(SITE_DIR, ".nojekyll"), "a").close()
 
 
 def get_date_stamp() -> str:
