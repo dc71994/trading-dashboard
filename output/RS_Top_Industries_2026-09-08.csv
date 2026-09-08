@@ -1,0 +1,21 @@
+Rank,Industry,Sector,Median_RS,Mean_RS,Pct_Above_70,Pct_Near_High,Stock_Count,Top_Stock,Top_Stock_RS,Industry_Rank_Score
+1,Biotechnology,Health Technology,79.0,83.33333333333333,100.0,100.0,3,RUBICON.NS,96,89.5
+2,Oilfield Services/Equipment,Industrial Services,93.0,85.66666666666667,66.66666666666666,100.0,3,DEEPINDS.NS,96,86.5
+3,Electronics Distributors,Distribution Services,88.5,88.0,100.0,25.0,4,RPTECH.NS,94,79.25
+4,Medical Specialties,Health Technology,77.0,81.0,66.66666666666666,66.66666666666666,3,SETL.NS,99,71.83333333333333
+5,Internet Retail,Retail Trade,78.0,62.5,75.0,50.0,4,MSTCLTD.NS,90,71.5
+6,Electronic Components,Electronic Technology,86.5,66.75,75.0,25.0,4,UNIVCABLES.NS,94,70.75
+7,Electronic Production Equipment,Electronic Technology,79.0,74.33333333333333,66.66666666666666,55.55555555555556,9,CYIENTDLM.NS,98,70.61111111111111
+8,Specialty Stores,Retail Trade,79.0,70.0,60.0,50.0,10,CONFIPET.NS,96,67.5
+9,Pharmaceuticals: Major,Health Technology,73.0,64.27631578947368,56.57894736842105,50.0,76,MOREPENLAB.NS,98,63.473684210526315
+10,Internet Software/Services,Technology Services,69.0,63.23076923076923,46.15384615384615,61.53846153846154,13,BLSE.NS,95,60.65384615384615
+11,Metal Fabrication,Producer Manufacturing,69.0,65.26086956521739,47.82608695652174,56.52173913043478,23,MENONBE.NS,98,60.152173913043484
+12,Containers/Packaging,Process Industries,73.5,63.5,50.0,41.66666666666667,12,COMSYN.NS,95,60.083333333333336
+13,Chemicals: Specialty,Process Industries,72.0,59.94117647058823,50.98039215686274,37.254901960784316,51,IOLCP.NS,98,58.74509803921569
+14,Aerospace & Defense,Electronic Technology,67.5,58.75,50.0,25.0,8,PARAS.NS,94,53.75
+15,Textiles,Process Industries,62.5,62.53846153846154,46.15384615384615,42.30769230769231,26,JINDWORLD.NS,98,53.55769230769231
+16,Auto Parts: OEM,Producer Manufacturing,61.0,58.52,42.0,40.0,50,SSWL.NS,93,51.1
+17,Medical/Nursing Services,Health Services,59.5,51.8,30.0,60.0,10,VIJAYA.NS,79,50.75
+18,Other Consumer Specialties,Consumer Durables,61.0,56.8,40.0,40.0,15,TBZ.NS,99,50.5
+19,Wholesale Distributors,Distribution Services,63.5,53.5625,37.5,37.5,16,PRIZOR.NS,98,50.5
+20,Electrical Products,Producer Manufacturing,60.5,59.32,46.0,32.0,50,HFCL.NS,98,50.449999999999996
