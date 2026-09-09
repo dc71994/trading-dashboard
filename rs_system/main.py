@@ -11,6 +11,7 @@ Usage:
 import argparse
 import sys
 import time
+import os
 import warnings
 from datetime import datetime
 
@@ -157,23 +158,38 @@ def main():
     print(f"  ✓ {len(leaders)} leaders in top {config.TOP_INDUSTRIES_COUNT} industries")
 
     # ── Step 6: Generate Reports ────────────────────────────────────
-    print("\n[6/6] Generating reports...")
+    print(f"\n[6/6] Generating reports...")
+    
+    # --- HISTORY TRACKING ---
+    date_stamp = datetime.now().strftime("%Y-%m-%d")
+    history_file = config.INDUSTRY_HISTORY_FILE
+    
+    # 1. Prepare today's data for appending
+    today_history = industry_rs[['Industry', 'Rank', 'Median_RS']].copy()
+    today_history['Date'] = date_stamp
+    
+    # 2. Append to CSV
+    os.makedirs(config.HISTORY_DIR, exist_ok=True)
+    if os.path.exists(history_file):
+        # Load existing, remove today's data if we are re-running on the same day
+        old_hist = pd.read_csv(history_file)
+        old_hist = old_hist[old_hist['Date'] != date_stamp]
+        full_hist = pd.concat([old_hist, today_history], ignore_index=True)
+    else:
+        full_hist = today_history
+        
+    full_hist.to_csv(history_file, index=False)
+    
+    # ------------------------
 
-    p1 = export_all_stocks(stock_rs)
-    print(f"  → {p1}")
-
-    p2 = export_top_industries(industry_rs)
-    print(f"  → {p2}")
-
-    p3 = export_sector_csv(sector_rs)
-    print(f"  → {p3}")
-
-    p4 = export_leaders(leaders)
-    print(f"  → {p4}")
+    report.export_all_stocks(stock_rs)
+    report.export_top_industries(industry_rs)
+    report.export_sector_index_rs(sector_rs)
+    report.export_leaders(leaders)
 
     if not args.no_dashboard:
-        p5 = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders)
-        print(f"  → {p5}")
+        html_path = report.generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist)
+        print(f"  → {html_path}")
     else:
         print("  (HTML dashboard skipped)")
 

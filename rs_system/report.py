@@ -4,15 +4,17 @@ Produces CSV exports and an interactive HTML dashboard.
 """
 
 import os
+import json
 import pandas as pd
 from datetime import datetime
-from .config import OUTPUT_DIR, SITE_DIR, TOP_INDUSTRIES_COUNT, TOP_STOCKS_DISPLAY
+from .config import OUTPUT_DIR, SITE_DIR, HISTORY_DIR, TOP_INDUSTRIES_COUNT, TOP_STOCKS_DISPLAY
 
 
 def ensure_output_dir():
     """Create output directories if they don't exist."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(SITE_DIR, exist_ok=True)
+    os.makedirs(HISTORY_DIR, exist_ok=True)
     # Ensure .nojekyll exists so GitHub Pages serves raw HTML cleanly
     open(os.path.join(SITE_DIR, ".nojekyll"), "a").close()
 
@@ -25,7 +27,6 @@ def get_date_stamp() -> str:
 # ─── CSV Report Generators ──────────────────────────────────────────
 
 def export_all_stocks(stock_rs: pd.DataFrame) -> str:
-    """Export full universe RS rankings to CSV."""
     ensure_output_dir()
     path = os.path.join(OUTPUT_DIR, f"RS_All_Stocks_{get_date_stamp()}.csv")
     stock_rs.to_csv(path, index=False)
@@ -33,7 +34,6 @@ def export_all_stocks(stock_rs: pd.DataFrame) -> str:
 
 
 def export_top_industries(industry_rs: pd.DataFrame) -> str:
-    """Export top industry rankings to CSV."""
     ensure_output_dir()
     path = os.path.join(OUTPUT_DIR, f"RS_Top_Industries_{get_date_stamp()}.csv")
     top = industry_rs.head(TOP_INDUSTRIES_COUNT)
@@ -42,7 +42,6 @@ def export_top_industries(industry_rs: pd.DataFrame) -> str:
 
 
 def export_sector_index_rs(sector_rs: pd.DataFrame) -> str:
-    """Export sectoral index RS rankings to CSV."""
     ensure_output_dir()
     path = os.path.join(OUTPUT_DIR, f"RS_Sector_Index_Ranking_{get_date_stamp()}.csv")
     sector_rs.to_csv(path, index=False)
@@ -50,7 +49,6 @@ def export_sector_index_rs(sector_rs: pd.DataFrame) -> str:
 
 
 def export_leaders(leaders: pd.DataFrame) -> str:
-    """Export leaders-in-leading-groups to CSV."""
     ensure_output_dir()
     path = os.path.join(OUTPUT_DIR, f"RS_Leaders_In_Top_Groups_{get_date_stamp()}.csv")
     leaders.to_csv(path, index=False)
@@ -60,9 +58,7 @@ def export_leaders(leaders: pd.DataFrame) -> str:
 # ─── HTML Dashboard Generator ───────────────────────────────────────
 
 def _rs_color(val: float, is_pct: bool = False) -> str:
-    """Return CSS color based on RS value. Green = strong, Red = weak."""
     if is_pct:
-        # For percentage returns
         if val > 30: return "#00e676"
         if val > 15: return "#66bb6a"
         if val > 5: return "#a5d6a7"
@@ -71,7 +67,6 @@ def _rs_color(val: float, is_pct: bool = False) -> str:
         if val > -15: return "#ef5350"
         return "#d32f2f"
     else:
-        # For RS percentile (0-99)
         if val >= 90: return "#00e676"
         if val >= 80: return "#66bb6a"
         if val >= 70: return "#a5d6a7"
@@ -81,28 +76,36 @@ def _rs_color(val: float, is_pct: bool = False) -> str:
 
 
 def _format_num(val, decimals=1) -> str:
-    """Format number with fallback for NaN."""
     try:
-        if pd.isna(val):
-            return "—"
+        if pd.isna(val): return "—"
         return f"{val:,.{decimals}f}"
-    except (TypeError, ValueError):
+    except:
         return str(val)
 
 
 def _format_volume(val) -> str:
-    """Format volume as human-readable (e.g., 1.2M, 450K)."""
     try:
-        if pd.isna(val):
-            return "—"
+        if pd.isna(val): return "—"
         val = float(val)
-        if val >= 1_000_000:
-            return f"{val / 1_000_000:.1f}M"
-        if val >= 1_000:
-            return f"{val / 1_000:.0f}K"
+        if val >= 1_000_000: return f"{val / 1_000_000:.1f}M"
+        if val >= 1_000: return f"{val / 1_000:.0f}K"
         return f"{val:.0f}"
-    except (TypeError, ValueError):
+    except:
         return "—"
+
+
+def get_copy_html(ticker_clean: str) -> str:
+    """Returns the HTML for the copy button."""
+    return f"""
+    <div style="display:flex; align-items:center; gap:6px;">
+        <span class="mono">{ticker_clean}</span>
+        <button class="copy-btn" onclick="copyTicker(this, 'NSE:{ticker_clean}')" title="Copy NSE:{ticker_clean}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        </button>
+    </div>"""
 
 
 def generate_dashboard(
@@ -110,11 +113,18 @@ def generate_dashboard(
     industry_rs: pd.DataFrame,
     sector_rs: pd.DataFrame,
     leaders: pd.DataFrame,
+    history_df: pd.DataFrame = None,
 ) -> str:
-    """Generate self-contained interactive HTML dashboard."""
     ensure_output_dir()
     date_stamp = get_date_stamp()
     path = os.path.join(OUTPUT_DIR, f"RS_Dashboard_{date_stamp}.html")
+
+    # ── History Data for Chart.js ──
+    history_json = "[]"
+    if history_df is not None and not history_df.empty:
+        # Sort by date
+        history_df = history_df.sort_values("Date")
+        history_json = history_df.to_json(orient="records")
 
     # ── Build sector index heatmap rows ──
     sector_rows = ""
@@ -141,7 +151,7 @@ def generate_dashboard(
             <td>{_format_num(row.get('Pct_Above_70', 0), 0)}%</td>
             <td>{_format_num(row.get('Pct_Near_High', 0), 0)}%</td>
             <td>{int(row.get('Stock_Count', 0))}</td>
-            <td class="mono">{row.get('Top_Stock', '—').replace('.NS', '')}</td>
+            <td>{get_copy_html(row.get('Top_Stock', '—').replace('.NS', ''))}</td>
             <td style="color:{_rs_color(row.get('Top_Stock_RS', 0))}">{_format_num(row.get('Top_Stock_RS', 0), 0)}</td>
         </tr>"""
 
@@ -152,7 +162,7 @@ def generate_dashboard(
         stock_rows += f"""
         <tr>
             <td class="rank-cell">{i + 1}</td>
-            <td class="sticky-col mono">{ticker_clean}</td>
+            <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
             <td>₹{_format_num(row.get('Current_Price', 0))}</td>
             <td>₹{_format_num(row.get('High_52W', 0))}</td>
             <td style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
@@ -170,7 +180,7 @@ def generate_dashboard(
         leader_rows += f"""
         <tr>
             <td class="rank-cell">{i + 1}</td>
-            <td class="sticky-col mono">{ticker_clean}</td>
+            <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
             <td>{row.get('Industry', '—')}</td>
             <td>{row.get('Sector', '—')}</td>
             <td>₹{_format_num(row.get('Current_Price', 0))}</td>
@@ -197,6 +207,7 @@ def generate_dashboard(
 <title>RS Dashboard — {date_stamp}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root {{
     --bg: #0a0a0f;
@@ -239,189 +250,77 @@ def generate_dashboard(
     flex-wrap: wrap;
     gap: 12px;
   }}
-  .header h1 {{
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: var(--text);
-  }}
-  .header h1 span {{
-    color: var(--accent);
-  }}
-  .header .date {{
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text-muted);
-  }}
+  .header h1 {{ font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }}
+  .header h1 span {{ color: var(--accent); }}
+  .header .date {{ font-family: var(--mono); font-size: 13px; color: var(--text-muted); }}
 
   /* ── Stats Bar ── */
-  .stats-bar {{
-    display: flex;
-    gap: 16px;
-    margin-bottom: 36px;
-    flex-wrap: wrap;
-  }}
-  .stat-card {{
+  .stats-bar {{ display: flex; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }}
+  .stat-card {{ background: var(--surface); border: 1px solid var(--border); padding: 16px 24px; flex: 1; min-width: 140px; position: relative; }}
+  .stat-card::before, .stat-card::after {{ content: ''; position: absolute; width: 8px; height: 8px; border-color: var(--accent); border-style: solid; }}
+  .stat-card::before {{ top: -1px; left: -1px; border-width: 1px 0 0 1px; }}
+  .stat-card::after {{ bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }}
+  .stat-value {{ font-size: 28px; font-weight: 700; color: var(--accent); font-family: var(--mono); }}
+  .stat-label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 4px; }}
+
+  /* ── Section & Chart ── */
+  .section {{ margin-bottom: 40px; }}
+  .section-header {{ display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }}
+  .section-num {{ font-family: var(--mono); font-size: 12px; color: var(--accent); background: var(--accent-dim); padding: 2px 8px; }}
+  .section-title {{ font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }}
+  
+  .chart-container {{
     background: var(--surface);
     border: 1px solid var(--border);
-    padding: 16px 24px;
-    flex: 1;
-    min-width: 140px;
-    position: relative;
-  }}
-  .stat-card::before,
-  .stat-card::after {{
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border-color: var(--accent);
-    border-style: solid;
-  }}
-  .stat-card::before {{
-    top: -1px; left: -1px;
-    border-width: 1px 0 0 1px;
-  }}
-  .stat-card::after {{
-    bottom: -1px; right: -1px;
-    border-width: 0 1px 1px 0;
-  }}
-  .stat-value {{
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--accent);
-    font-family: var(--mono);
-  }}
-  .stat-label {{
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    margin-top: 4px;
-  }}
-
-  /* ── Section ── */
-  .section {{
-    margin-bottom: 40px;
-  }}
-  .section-header {{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-  }}
-  .section-num {{
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--accent);
-    background: var(--accent-dim);
-    padding: 2px 8px;
-  }}
-  .section-title {{
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    padding: 20px;
+    height: 400px;
+    width: 100%;
+    margin-bottom: 24px;
   }}
 
   /* ── Tables ── */
-  .table-wrap {{
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    background: var(--surface);
-  }}
-  table {{
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }}
-  thead th {{
-    background: var(--surface-2);
-    padding: 10px 14px;
-    text-align: left;
-    font-weight: 500;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }}
-  thead th:hover {{
-    color: var(--accent);
-  }}
+  .table-wrap {{ overflow-x: auto; border: 1px solid var(--border); background: var(--surface); }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+  thead th {{ background: var(--surface-2); padding: 10px 14px; text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2; }}
+  thead th:hover {{ color: var(--accent); }}
   thead th.sorted-asc::after {{ content: ' ▲'; color: var(--accent); font-size: 9px; }}
   thead th.sorted-desc::after {{ content: ' ▼'; color: var(--accent); font-size: 9px; }}
-  tbody td {{
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }}
-  tbody tr:hover {{
-    background: rgba(255,255,255,0.03);
-  }}
-  .rank-cell {{
-    font-family: var(--mono);
-    color: var(--text-muted);
-    font-size: 12px;
-    width: 36px;
-  }}
-  .rs-cell {{
-    font-family: var(--mono);
-    font-weight: 600;
-    font-size: 14px;
-  }}
-  .mono {{
-    font-family: var(--mono);
-    font-size: 12px;
-  }}
-  .sticky-col {{
-    font-weight: 500;
-  }}
+  tbody td {{ padding: 8px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }}
+  tbody tr:hover {{ background: rgba(255,255,255,0.03); }}
+  .rank-cell {{ font-family: var(--mono); color: var(--text-muted); font-size: 12px; width: 36px; }}
+  .rs-cell {{ font-family: var(--mono); font-weight: 600; font-size: 14px; }}
+  .mono {{ font-family: var(--mono); font-size: 12px; }}
+  .sticky-col {{ font-weight: 500; }}
 
-  /* ── Tabs ── */
-  .tab-bar {{
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 0;
-  }}
-  .tab-btn {{
-    padding: 10px 20px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-muted);
+  /* ── Buttons & UI ── */
+  .copy-btn {{
     background: none;
     border: none;
-    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
   }}
-  .tab-btn:hover {{ color: var(--text); }}
-  .tab-btn.active {{
+  .copy-btn:hover {{
     color: var(--accent);
-    border-bottom-color: var(--accent);
+    background: var(--surface-2);
   }}
-  .tab-panel {{
-    display: none;
-  }}
-  .tab-panel.active {{
-    display: block;
+  .copy-btn.copied {{
+    color: #fff;
+    background: var(--accent);
   }}
 
-  /* ── Responsive ── */
-  @media (max-width: 768px) {{
-    .header h1 {{ font-size: 20px; }}
-    .stat-value {{ font-size: 22px; }}
-    .stats-bar {{ gap: 8px; }}
-    .stat-card {{ padding: 12px 16px; }}
-    table {{ font-size: 12px; }}
-    tbody td, thead th {{ padding: 6px 10px; }}
-  }}
+  .tab-bar {{ display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0; flex-wrap: wrap; }}
+  .tab-btn {{ padding: 10px 20px; font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; }}
+  .tab-btn:hover {{ color: var(--text); }}
+  .tab-btn.active {{ color: var(--accent); border-bottom-color: var(--accent); }}
+  .tab-panel {{ display: none; }}
+  .tab-panel.active {{ display: block; }}
+
 </style>
 </head>
 <body>
@@ -455,15 +354,29 @@ def generate_dashboard(
 
   <!-- Tabs -->
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('sectors')">// Sector Indices</button>
+    <button class="tab-btn active" onclick="showTab('trend')">// Industry Trend</button>
+    <button class="tab-btn" onclick="showTab('sectors')">// Sector Indices</button>
     <button class="tab-btn" onclick="showTab('industries')">// Top Industries</button>
     <button class="tab-btn" onclick="showTab('stocks')">// Top Stocks</button>
     <button class="tab-btn" onclick="showTab('leaders')">// Leaders × Top Groups</button>
   </div>
+  
+  <!-- Tab: Industry Trend -->
+  <div id="tab-trend" class="tab-panel active">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <span class="section-num">00</span>
+        <span class="section-title">Historical Rotation (Top 10 Industries)</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="industryChart"></canvas>
+      </div>
+    </div>
+  </div>
 
   <!-- Tab: Sector Index RS -->
-  <div id="tab-sectors" class="tab-panel active">
-    <div class="section">
+  <div id="tab-sectors" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
       <div class="section-header">
         <span class="section-num">01</span>
         <span class="section-title">Sectoral Index Relative Strength vs Nifty 50</span>
@@ -488,7 +401,7 @@ def generate_dashboard(
 
   <!-- Tab: Industry Leaderboard -->
   <div id="tab-industries" class="tab-panel">
-    <div class="section">
+    <div class="section" style="margin-top: 24px;">
       <div class="section-header">
         <span class="section-num">02</span>
         <span class="section-title">Top {TOP_INDUSTRIES_COUNT} Industries by Relative Strength</span>
@@ -516,7 +429,7 @@ def generate_dashboard(
 
   <!-- Tab: Top Stocks -->
   <div id="tab-stocks" class="tab-panel">
-    <div class="section">
+    <div class="section" style="margin-top: 24px;">
       <div class="section-header">
         <span class="section-num">03</span>
         <span class="section-title">Top {TOP_STOCKS_DISPLAY} Stocks by RS Percentile</span>
@@ -545,7 +458,7 @@ def generate_dashboard(
 
   <!-- Tab: Leaders in Leading Groups -->
   <div id="tab-leaders" class="tab-panel">
-    <div class="section">
+    <div class="section" style="margin-top: 24px;">
       <div class="section-header">
         <span class="section-num">04</span>
         <span class="section-title">Leaders in Top {TOP_INDUSTRIES_COUNT} Industries (RS ≥ 80)</span>
@@ -576,6 +489,19 @@ def generate_dashboard(
 </div>
 
 <script>
+  // ── Copy to Clipboard ──
+  function copyTicker(btn, ticker) {{
+    navigator.clipboard.writeText(ticker).then(() => {{
+      const originalHtml = btn.innerHTML;
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      setTimeout(() => {{
+        btn.classList.remove('copied');
+        btn.innerHTML = originalHtml;
+      }}, 1500);
+    }});
+  }}
+
   // ── Tab switching ──
   function showTab(name) {{
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -593,12 +519,11 @@ def generate_dashboard(
         const rows = Array.from(tbody.querySelectorAll('tr'));
         const isAsc = th.classList.contains('sorted-asc');
 
-        // Clear all sort classes
         headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
 
         rows.sort((a, b) => {{
-          let aVal = a.cells[colIdx]?.textContent.replace(/[₹,%—\\s]/g, '').trim() || '';
-          let bVal = b.cells[colIdx]?.textContent.replace(/[₹,%—\\s]/g, '').trim() || '';
+          let aVal = a.cells[colIdx]?.textContent.replace(/[₹,%—\\s]/g, '').replace('NSE:', '').trim() || '';
+          let bVal = b.cells[colIdx]?.textContent.replace(/[₹,%—\\s]/g, '').replace('NSE:', '').trim() || '';
           const aNum = parseFloat(aVal);
           const bNum = parseFloat(bVal);
           if (!isNaN(aNum) && !isNaN(bNum)) {{
@@ -612,6 +537,90 @@ def generate_dashboard(
       }});
     }});
   }});
+  
+  // ── Chart.js Logic ──
+  const historyData = {history_json};
+  
+  if (historyData.length > 0) {{
+      // Group by Industry
+      const industries = [...new Set(historyData.map(d => d.Industry))];
+      // Get the latest date to find current top 10
+      const dates = [...new Set(historyData.map(d => d.Date))].sort();
+      const latestDate = dates[dates.length - 1];
+      
+      const latestRanks = historyData.filter(d => d.Date === latestDate)
+                                     .sort((a, b) => a.Rank - b.Rank)
+                                     .map(d => d.Industry);
+                                     
+      const top10 = latestRanks.slice(0, 10);
+      
+      const colors = [
+          '#00e676', '#ff4081', '#29b6f6', '#ffee58', '#ab47bc',
+          '#ff7043', '#26a69a', '#ec407a', '#7e57c2', '#9ccc65'
+      ];
+      
+      const datasets = top10.map((ind, i) => {{
+          const indData = dates.map(date => {{
+              const row = historyData.find(d => d.Date === date && d.Industry === ind);
+              return row ? row.Median_RS : null;
+          }});
+          
+          return {{
+              label: ind,
+              data: indData,
+              borderColor: colors[i % colors.length],
+              backgroundColor: colors[i % colors.length],
+              tension: 0.3,
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 5
+          }};
+      }});
+      
+      const ctx = document.getElementById('industryChart').getContext('2d');
+      Chart.defaults.color = '#6b6b7b';
+      Chart.defaults.font.family = "'Inter', sans-serif";
+      
+      new Chart(ctx, {{
+          type: 'line',
+          data: {{
+              labels: dates,
+              datasets: datasets
+          }},
+          options: {{
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: {{
+                  mode: 'index',
+                  intersect: false,
+              }},
+              plugins: {{
+                  legend: {{
+                      position: 'right',
+                      labels: {{ boxWidth: 12, usePointStyle: true, padding: 15 }}
+                  }},
+                  tooltip: {{
+                      backgroundColor: '#1a1a26',
+                      titleColor: '#e8e8ed',
+                      bodyColor: '#e8e8ed',
+                      borderColor: 'rgba(255,255,255,0.06)',
+                      borderWidth: 1
+                  }}
+              }},
+              scales: {{
+                  y: {{
+                      grid: {{ color: 'rgba(255,255,255,0.03)' }},
+                      title: {{ display: true, text: 'Median RS Score' }}
+                  }},
+                  x: {{
+                      grid: {{ color: 'rgba(255,255,255,0.03)' }}
+                  }}
+              }}
+          }}
+      }});
+  }} else {{
+      document.getElementById('industryChart').parentElement.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding-top:40px;">No historical data available yet. Check back after a few updates!</div>';
+  }}
 </script>
 </body>
 </html>"""

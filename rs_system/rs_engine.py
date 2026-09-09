@@ -85,7 +85,7 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         
     # Rank and calculate percentile (0-99)
     res_df['RS_Percentile'] = res_df['RS_Composite'].rank(pct=True) * 99
-    res_df['RS_Percentile'] = res_df['RS_Percentile'].round().astype(int)
+    res_df['RS_Percentile'] = res_df['RS_Percentile'].fillna(0).round().astype(int)
     
     res_df = res_df.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     

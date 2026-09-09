@@ -7,7 +7,7 @@ echo "🔄 Running RS System Scanner..."
 python3 -m rs_system.main
 
 echo "📦 Committing changes to Git..."
-git add docs/ output/ cache/
+git add .
 git commit -m "Automated update: $(date '+%Y-%m-%d %H:%M:%S')"
 
 echo "🚀 Pushing to GitHub..."

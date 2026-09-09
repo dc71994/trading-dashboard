@@ -98,8 +98,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_DIR = os.path.join(PROJECT_ROOT, "cache")
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output")
 SITE_DIR = os.path.join(PROJECT_ROOT, "docs")  # GitHub Pages serves from /docs
+HISTORY_DIR = os.path.join(PROJECT_ROOT, "history")
 
 INDUSTRY_MAP_CACHE = os.path.join(CACHE_DIR, "industry_map.csv")
+INDUSTRY_HISTORY_FILE = os.path.join(HISTORY_DIR, "industry_rs_history.csv")
 INDUSTRY_MAP_TTL_DAYS = 7   # Refresh industry mapping weekly
 
 # ─── Output Settings ────────────────────────────────────────────────
