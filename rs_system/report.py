@@ -265,7 +265,8 @@ def generate_dashboard(
 
   /* ── Section & Chart ── */
   .section {{ margin-bottom: 40px; }}
-  .section-header {{ display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }}
+  .section-header {{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }}
+  .section-header-left {{ display: flex; align-items: center; gap: 10px; }}
   .section-num {{ font-family: var(--mono); font-size: 12px; color: var(--accent); background: var(--accent-dim); padding: 2px 8px; }}
   .section-title {{ font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }}
   
@@ -315,19 +316,19 @@ def generate_dashboard(
   }}
   
   .copy-all-btn {{
-    margin-top: 16px;
-    padding: 10px 16px;
+    padding: 6px 14px;
     background: var(--surface-2);
     border: 1px solid var(--border);
     color: var(--text);
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }}
   .copy-all-btn:hover {{
     background: rgba(255,255,255,0.08);
@@ -452,8 +453,14 @@ def generate_dashboard(
   <div id="tab-stocks" class="tab-panel">
     <div class="section" style="margin-top: 24px;">
       <div class="section-header">
-        <span class="section-num">03</span>
-        <span class="section-title">Top {TOP_STOCKS_DISPLAY} Stocks by RS Percentile</span>
+        <div class="section-header-left">
+          <span class="section-num">03</span>
+          <span class="section-title">Top {TOP_STOCKS_DISPLAY} Stocks by RS Percentile</span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-stocks')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
       </div>
       <div class="table-wrap">
         <table id="table-stocks">
@@ -474,10 +481,6 @@ def generate_dashboard(
           <tbody>{stock_rows}</tbody>
         </table>
       </div>
-      <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-stocks')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        Copy All for TradingView
-      </button>
     </div>
   </div>
 
@@ -485,8 +488,14 @@ def generate_dashboard(
   <div id="tab-leaders" class="tab-panel">
     <div class="section" style="margin-top: 24px;">
       <div class="section-header">
-        <span class="section-num">04</span>
-        <span class="section-title">Leaders in Top {TOP_INDUSTRIES_COUNT} Industries (RS ≥ 80)</span>
+        <div class="section-header-left">
+          <span class="section-num">04</span>
+          <span class="section-title">Leaders in Top {TOP_INDUSTRIES_COUNT} Industries (RS ≥ 80)</span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-leaders')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
       </div>
       <div class="table-wrap">
         <table id="table-leaders">
@@ -508,10 +517,6 @@ def generate_dashboard(
           <tbody>{leader_rows}</tbody>
         </table>
       </div>
-      <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-leaders')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        Copy All for TradingView
-      </button>
     </div>
   </div>
 
@@ -548,12 +553,12 @@ def generate_dashboard(
     const textToCopy = tickers.join(',');
     navigator.clipboard.writeText(textToCopy).then(() => {{
       const originalHtml = btn.innerHTML;
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied ' + tickers.length + ' Tickers!';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
       btn.style.color = 'var(--accent)';
       setTimeout(() => {{
         btn.innerHTML = originalHtml;
         btn.style.color = '';
-      }}, 2000);
+      }}, 1500);
     }});
   }}
 
