@@ -182,13 +182,13 @@ def main():
     
     # ------------------------
 
-    report.export_all_stocks(stock_rs)
-    report.export_top_industries(industry_rs)
-    report.export_sector_index_rs(sector_rs)
-    report.export_leaders(leaders)
+    export_all_stocks(stock_rs)
+    export_top_industries(industry_rs)
+    export_sector_csv(sector_rs)
+    export_leaders(leaders)
 
     if not args.no_dashboard:
-        html_path = report.generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist)
+        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist)
         print(f"  → {html_path}")
     else:
         print("  (HTML dashboard skipped)")
