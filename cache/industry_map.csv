@@ -437,6 +437,7 @@ BIMETAL.NS,Producer Manufacturing,Auto Parts: OEM
 BIOCON.NS,Health Technology,Pharmaceuticals: Major
 BIOFILCHEM.NS,Health Technology,Pharmaceuticals: Major
 BIOPOL.NS,Process Industries,Chemicals: Major Diversified
+BIRDYS.NS,Consumer Non-Durables,Food: Specialty/Candy
 BIRET.RR.NS,Finance,Real Estate Investment Trusts
 BIRLACABLE.NS,Producer Manufacturing,Electrical Products
 BIRLACORPN.NS,Non-Energy Minerals,Construction Materials
@@ -697,7 +698,7 @@ DECNGOLD.NS,Non-Energy Minerals,Precious Metals
 DEEDEV.NS,Producer Manufacturing,Industrial Machinery
 DEEM.NS,Non-Energy Minerals,Steel
 DEEP.NS,Process Industries,Chemicals: Specialty
-DEEPA.NS,,
+DEEPA.NS,Consumer Durables,Other Consumer Specialties
 DEEPAKFERT.NS,Process Industries,Chemicals: Agricultural
 DEEPAKNTR.NS,Process Industries,Chemicals: Specialty
 DEEPINDS.NS,Industrial Services,Oilfield Services/Equipment
@@ -1787,7 +1788,7 @@ MOL.NS,Process Industries,Chemicals: Specialty
 MOLBIO.NS,Health Technology,Medical Specialties
 MOLDTECH.NS,Industrial Services,Engineering & Construction
 MOLDTKPAC.NS,Producer Manufacturing,Miscellaneous Manufacturing
-MOMSBELIEF.NS,,
+MOMSBELIEF.NS,Health Services,Medical/Nursing Services
 MONARCH.NS,Finance,Investment Banks/Brokers
 MONEYBOXX.NS,Finance,Regional Banks
 MONOLITH.NS,Non-Energy Minerals,Construction Materials
