@@ -61,6 +61,20 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         # Composite RS formula
         rs_composite = 0.40 * r_6m + 0.30 * r_3m + 0.20 * r_1m + 0.10 * r_1w
         
+        # Moving Averages calculations
+        close_series = df['Close'].dropna()
+        
+        # 10 EMA
+        ema_10 = close_series.ewm(span=10, adjust=False).mean().iloc[-1] if len(close_series) >= 10 else None
+        # 20 EMA
+        ema_20 = close_series.ewm(span=20, adjust=False).mean().iloc[-1] if len(close_series) >= 20 else None
+        # 50 SMA
+        sma_50 = close_series.rolling(window=50).mean().iloc[-1] if len(close_series) >= 50 else None
+        # 100 SMA
+        sma_100 = close_series.rolling(window=100).mean().iloc[-1] if len(close_series) >= 100 else None
+        # 200 SMA
+        sma_200 = close_series.rolling(window=200).mean().iloc[-1] if len(close_series) >= 200 else None
+
         results.append({
             'Ticker': ticker,
             'Current_Price': current_price,
@@ -71,7 +85,12 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Return_1M': r_1m * 100,
             'Return_3M': r_3m * 100,
             'Return_6M': r_6m * 100,
-            'RS_Composite': rs_composite
+            'RS_Composite': rs_composite,
+            'EMA_10': ema_10,
+            'EMA_20': ema_20,
+            'SMA_50': sma_50,
+            'SMA_100': sma_100,
+            'SMA_200': sma_200,
         })
         
     res_df = pd.DataFrame(results)
@@ -80,7 +99,8 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(columns=[
             'Ticker', 'Current_Price', 'High_52W', 'Pct_From_High', 'Avg_Volume',
             'Return_1W', 'Return_1M', 'Return_3M', 'Return_6M',
-            'RS_Composite', 'RS_Percentile'
+            'RS_Composite', 'RS_Percentile',
+            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200'
         ])
         
     # Rank and calculate percentile (0-99)
@@ -265,7 +285,8 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     cols = ['Ticker', 'Industry', 'Sector', 'Current_Price', 'High_52W', 'Pct_From_High', 
-            'RS_Percentile', 'Return_3M', 'Return_6M', 'Avg_Volume', 'Industry_Rank']
+            'Return_3M', 'Return_6M', 'RS_Percentile', 'Industry_Rank', 'Avg_Volume',
+            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200']
     
     # Only return columns that exist (in case of changes)
     existing_cols = [col for col in cols if col in filtered.columns]

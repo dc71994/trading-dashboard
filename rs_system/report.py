@@ -94,6 +94,18 @@ def _format_volume(val) -> str:
         return "—"
 
 
+def _format_ma(price, ma_val) -> str:
+    try:
+        if pd.isna(ma_val) or ma_val is None or ma_val == 0:
+            return "—"
+        pct_diff = ((price / ma_val) - 1.0) * 100.0
+        color = "#00e676" if pct_diff >= 0 else "#ef5350"
+        sign = "+" if pct_diff >= 0 else ""
+        return f"<div style='font-family:var(--mono); line-height:1.2;'><span>₹{ma_val:,.1f}</span><div style='font-size:10px; color:{color}; font-weight:500;'>{sign}{pct_diff:.1f}%</div></div>"
+    except:
+        return "—"
+
+
 def get_copy_html(ticker_clean: str) -> str:
     """Returns the HTML for the copy button."""
     return f"""
@@ -159,17 +171,23 @@ def generate_dashboard(
     stock_rows = ""
     for i, (_, row) in enumerate(stock_rs.head(TOP_STOCKS_DISPLAY).iterrows()):
         ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+        price = row.get('Current_Price', 0)
         stock_rows += f"""
         <tr>
             <td class="rank-cell">{i + 1}</td>
             <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
-            <td>₹{_format_num(row.get('Current_Price', 0))}</td>
+            <td>₹{_format_num(price)}</td>
             <td>₹{_format_num(row.get('High_52W', 0))}</td>
             <td style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+            <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
             <td style="color:{_rs_color(row.get('Return_1M', 0), True)}">{_format_num(row.get('Return_1M', 0))}%</td>
             <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
             <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
-            <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+            <td>{_format_ma(price, row.get('EMA_10'))}</td>
+            <td>{_format_ma(price, row.get('EMA_20'))}</td>
+            <td>{_format_ma(price, row.get('SMA_50'))}</td>
+            <td>{_format_ma(price, row.get('SMA_100'))}</td>
+            <td>{_format_ma(price, row.get('SMA_200'))}</td>
             <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
         </tr>"""
 
@@ -177,18 +195,24 @@ def generate_dashboard(
     leader_rows = ""
     for i, (_, row) in enumerate(leaders.iterrows()):
         ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+        price = row.get('Current_Price', 0)
         leader_rows += f"""
         <tr>
             <td class="rank-cell">{i + 1}</td>
             <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
             <td>{row.get('Industry', '—')}</td>
             <td>{row.get('Sector', '—')}</td>
-            <td>₹{_format_num(row.get('Current_Price', 0))}</td>
+            <td>₹{_format_num(price)}</td>
             <td style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+            <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
             <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
             <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
-            <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
             <td>{int(row.get('Industry_Rank', 0))}</td>
+            <td>{_format_ma(price, row.get('EMA_10'))}</td>
+            <td>{_format_ma(price, row.get('EMA_20'))}</td>
+            <td>{_format_ma(price, row.get('SMA_50'))}</td>
+            <td>{_format_ma(price, row.get('SMA_100'))}</td>
+            <td>{_format_ma(price, row.get('SMA_200'))}</td>
             <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
         </tr>"""
 
@@ -471,10 +495,15 @@ def generate_dashboard(
               <th>Price</th>
               <th>52W High</th>
               <th>% From High</th>
+              <th>RS</th>
               <th>1M</th>
               <th>3M</th>
               <th>6M</th>
-              <th>RS</th>
+              <th>10 EMA</th>
+              <th>20 EMA</th>
+              <th>50 SMA</th>
+              <th>100 SMA</th>
+              <th>200 SMA</th>
               <th>Avg Vol</th>
             </tr>
           </thead>
@@ -507,10 +536,15 @@ def generate_dashboard(
               <th>Sector</th>
               <th>Price</th>
               <th>% From High</th>
+              <th>RS</th>
               <th>3M</th>
               <th>6M</th>
-              <th>RS</th>
               <th>Ind. Rank</th>
+              <th>10 EMA</th>
+              <th>20 EMA</th>
+              <th>50 SMA</th>
+              <th>100 SMA</th>
+              <th>200 SMA</th>
               <th>Avg Vol</th>
             </tr>
           </thead>
