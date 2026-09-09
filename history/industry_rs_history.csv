@@ -678,85 +678,85 @@ Date,Industry,Rank,Median_RS
 2026-09-02,Tobacco,83,14.0
 2026-09-02,Other Consumer Services,84,8.0
 2026-09-02,Broadcasting,85,6.0
-2026-09-09,Medical Specialties,1,74.0
-2026-09-09,Electronic Production Equipment,2,81.0
-2026-09-09,Telecommunications Equipment,3,59.0
-2026-09-09,Specialty Stores,4,49.0
-2026-09-09,Aerospace & Defense,5,44.0
-2026-09-09,Food: Meat/Fish/Dairy,6,30.5
-2026-09-09,Air Freight/Couriers,7,38.0
-2026-09-09,Other Consumer Specialties,8,27.0
-2026-09-09,Gas Distributors,9,40.0
-2026-09-09,Industrial Specialties,10,22.0
-2026-09-09,Investment Banks/Brokers,11,33.0
-2026-09-09,Motor Vehicles,12,27.0
-2026-09-09,Semiconductors,13,39.0
-2026-09-09,Pharmaceuticals: Other,14,22.0
-2026-09-09,Electrical Products,15,18.5
-2026-09-09,Beverages: Alcoholic,16,22.0
-2026-09-09,Oil Refining/Marketing,17,23.0
-2026-09-09,Home Furnishings,18,31.5
-2026-09-09,Marine Shipping,19,37.0
-2026-09-09,Biotechnology,20,0.0
-2026-09-09,Oilfield Services/Equipment,21,0.0
-2026-09-09,Metal Fabrication,22,0.0
-2026-09-09,Major Banks,23,18.0
-2026-09-09,Information Technology Services,24,10.0
-2026-09-09,Internet Software/Services,25,0.0
-2026-09-09,Aluminum,26,26.0
-2026-09-09,Finance/Rental/Leasing,27,11.5
-2026-09-09,Pharmaceuticals: Major,28,0.0
-2026-09-09,Electronic Components,29,0.0
-2026-09-09,Electric Utilities,30,18.0
-2026-09-09,Other Transportation,31,13.5
-2026-09-09,Food: Major Diversified,32,0.0
-2026-09-09,Auto Parts: OEM,33,0.0
-2026-09-09,Packaged Software,34,7.0
-2026-09-09,Multi-Line Insurance,35,0.0
-2026-09-09,Wholesale Distributors,36,0.0
-2026-09-09,Homebuilding,37,20.0
-2026-09-09,Containers/Packaging,38,0.0
-2026-09-09,Industrial Machinery,39,0.0
-2026-09-09,Medical/Nursing Services,40,0.0
-2026-09-09,Chemicals: Specialty,41,0.0
-2026-09-09,Pulp & Paper,42,18.0
-2026-09-09,Electronics/Appliances,43,0.0
-2026-09-09,Integrated Oil,44,7.5
-2026-09-09,Data Processing Services,45,17.0
-2026-09-09,Apparel/Footwear Retail,46,6.0
-2026-09-09,Steel,47,0.0
-2026-09-09,Regional Banks,48,0.0
-2026-09-09,Electronics Distributors,49,0.0
-2026-09-09,Household/Personal Care,50,2.5
-2026-09-09,Hospital/Nursing Management,51,0.0
-2026-09-09,Trucking,52,0.0
-2026-09-09,Food: Specialty/Candy,53,0.0
-2026-09-09,Other Metals/Minerals,54,10.5
-2026-09-09,Tobacco,55,12.0
-2026-09-09,Trucks/Construction/Farm Machinery,56,4.0
-2026-09-09,Engineering & Construction,57,0.0
-2026-09-09,Textiles,58,0.0
-2026-09-09,Building Products,59,0.0
-2026-09-09,Agricultural Commodities/Milling,60,0.0
-2026-09-09,Restaurants,61,0.0
-2026-09-09,Chemicals: Major Diversified,62,0.0
-2026-09-09,Financial Conglomerates,63,0.0
-2026-09-09,Apparel/Footwear,64,0.0
-2026-09-09,Miscellaneous Commercial Services,65,0.0
-2026-09-09,Movies/Entertainment,66,0.0
-2026-09-09,Investment Managers,67,0.0
-2026-09-09,Life/Health Insurance,68,3.5
-2026-09-09,Miscellaneous Manufacturing,69,0.0
-2026-09-09,Real Estate Development,70,0.0
-2026-09-09,Chemicals: Agricultural,71,0.0
-2026-09-09,Construction Materials,72,0.0
-2026-09-09,Alternative Power Generation,73,1.0
-2026-09-09,Internet Retail,74,0.0
-2026-09-09,Forest Products,75,0.0
-2026-09-09,Electronic Equipment/Instruments,76,0.0
-2026-09-09,Automotive Aftermarket,77,0.0
-2026-09-09,Office Equipment/Supplies,78,0.0
-2026-09-09,Hotels/Resorts/Cruise lines,79,0.0
-2026-09-09,Industrial Conglomerates,80,0.0
-2026-09-09,Major Telecommunications,81,0.0
-2026-09-09,Other Consumer Services,82,0.0
+2026-09-09,Biotechnology,1,75.0
+2026-09-09,Oilfield Services/Equipment,2,93.0
+2026-09-09,Electronics Distributors,3,88.5
+2026-09-09,Electronic Components,4,79.0
+2026-09-09,Medical Specialties,5,80.0
+2026-09-09,Internet Retail,6,78.5
+2026-09-09,Electronic Production Equipment,7,83.0
+2026-09-09,Specialty Stores,8,79.0
+2026-09-09,Containers/Packaging,9,78.0
+2026-09-09,Internet Software/Services,10,70.0
+2026-09-09,Chemicals: Specialty,11,73.0
+2026-09-09,Metal Fabrication,12,70.0
+2026-09-09,Pharmaceuticals: Major,13,69.0
+2026-09-09,Integrated Oil,14,64.5
+2026-09-09,Wholesale Distributors,15,67.0
+2026-09-09,Aerospace & Defense,16,67.0
+2026-09-09,Textiles,17,65.0
+2026-09-09,Auto Parts: OEM,18,64.5
+2026-09-09,Electrical Products,19,62.5
+2026-09-09,Medical/Nursing Services,20,60.0
+2026-09-09,Other Consumer Specialties,21,64.5
+2026-09-09,Industrial Specialties,22,63.0
+2026-09-09,Telecommunications Equipment,23,56.0
+2026-09-09,Agricultural Commodities/Milling,24,60.5
+2026-09-09,Restaurants,25,66.0
+2026-09-09,Trucks/Construction/Farm Machinery,26,60.0
+2026-09-09,Food: Meat/Fish/Dairy,27,62.5
+2026-09-09,Steel,28,54.0
+2026-09-09,Regional Banks,29,51.5
+2026-09-09,Pharmaceuticals: Other,30,46.5
+2026-09-09,Industrial Machinery,31,51.0
+2026-09-09,Chemicals: Major Diversified,32,52.5
+2026-09-09,Multi-Line Insurance,33,54.0
+2026-09-09,Investment Banks/Brokers,34,55.0
+2026-09-09,Pulp & Paper,35,58.5
+2026-09-09,Movies/Entertainment,36,58.0
+2026-09-09,Food: Specialty/Candy,37,49.0
+2026-09-09,Hospital/Nursing Management,38,45.0
+2026-09-09,Finance/Rental/Leasing,39,51.0
+2026-09-09,Other Transportation,40,38.5
+2026-09-09,Building Products,41,46.0
+2026-09-09,Packaged Software,42,48.0
+2026-09-09,Electronic Equipment/Instruments,43,39.0
+2026-09-09,Home Furnishings,44,43.5
+2026-09-09,Food: Major Diversified,45,43.5
+2026-09-09,Real Estate Development,46,49.0
+2026-09-09,Electronics/Appliances,47,35.5
+2026-09-09,Miscellaneous Commercial Services,48,49.5
+2026-09-09,Air Freight/Couriers,49,44.5
+2026-09-09,Semiconductors,50,46.0
+2026-09-09,Motor Vehicles,51,38.0
+2026-09-09,Information Technology Services,52,37.5
+2026-09-09,Other Metals/Minerals,53,32.5
+2026-09-09,Apparel/Footwear,54,40.0
+2026-09-09,Investment Managers,55,25.5
+2026-09-09,Miscellaneous Manufacturing,56,34.5
+2026-09-09,Beverages: Alcoholic,57,31.0
+2026-09-09,Financial Conglomerates,58,44.0
+2026-09-09,Alternative Power Generation,59,33.0
+2026-09-09,Engineering & Construction,60,30.0
+2026-09-09,Life/Health Insurance,61,36.0
+2026-09-09,Homebuilding,62,45.0
+2026-09-09,Gas Distributors,63,37.5
+2026-09-09,Oil Refining/Marketing,64,24.0
+2026-09-09,Office Equipment/Supplies,65,24.0
+2026-09-09,Hotels/Resorts/Cruise lines,66,27.0
+2026-09-09,Electric Utilities,67,25.0
+2026-09-09,Major Banks,68,24.0
+2026-09-09,Chemicals: Agricultural,69,29.0
+2026-09-09,Automotive Aftermarket,70,20.0
+2026-09-09,Marine Shipping,71,36.0
+2026-09-09,Industrial Conglomerates,72,33.0
+2026-09-09,Apparel/Footwear Retail,73,20.0
+2026-09-09,Major Telecommunications,74,28.5
+2026-09-09,Other Consumer Services,75,27.5
+2026-09-09,Construction Materials,76,20.5
+2026-09-09,Household/Personal Care,77,11.5
+2026-09-09,Trucking,78,8.0
+2026-09-09,Aluminum,79,20.0
+2026-09-09,Forest Products,80,17.0
+2026-09-09,Data Processing Services,81,14.0
+2026-09-09,Tobacco,82,12.0

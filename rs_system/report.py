@@ -313,6 +313,27 @@ def generate_dashboard(
     color: #fff;
     background: var(--accent);
   }}
+  
+  .copy-all-btn {{
+    margin-top: 16px;
+    padding: 10px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }}
+  .copy-all-btn:hover {{
+    background: rgba(255,255,255,0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+  }}
 
   .tab-bar {{ display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0; flex-wrap: wrap; }}
   .tab-btn {{ padding: 10px 20px; font-family: var(--mono); font-size: 12px; color: var(--text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; }}
@@ -453,6 +474,10 @@ def generate_dashboard(
           <tbody>{stock_rows}</tbody>
         </table>
       </div>
+      <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-stocks')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        Copy All for TradingView
+      </button>
     </div>
   </div>
 
@@ -483,6 +508,10 @@ def generate_dashboard(
           <tbody>{leader_rows}</tbody>
         </table>
       </div>
+      <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-leaders')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        Copy All for TradingView
+      </button>
     </div>
   </div>
 
@@ -499,6 +528,32 @@ def generate_dashboard(
         btn.classList.remove('copied');
         btn.innerHTML = originalHtml;
       }}, 1500);
+    }});
+  }}
+
+  function copyAllTickers(btn, tableId) {{
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr');
+    const tickers = [];
+    rows.forEach(row => {{
+      const tickerSpan = row.querySelector('.mono');
+      if (tickerSpan) {{
+        tickers.push('NSE:' + tickerSpan.textContent.trim());
+      }}
+    }});
+    
+    if (tickers.length === 0) return;
+    
+    const textToCopy = tickers.join(',');
+    navigator.clipboard.writeText(textToCopy).then(() => {{
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied ' + tickers.length + ' Tickers!';
+      btn.style.color = 'var(--accent)';
+      setTimeout(() => {{
+        btn.innerHTML = originalHtml;
+        btn.style.color = '';
+      }}, 2000);
     }});
   }}
 
