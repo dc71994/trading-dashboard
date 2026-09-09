@@ -292,3 +292,54 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     existing_cols = [col for col in cols if col in filtered.columns]
     
     return filtered[existing_cols]
+
+def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """Finds stocks with high momentum (>35% in 3M or 6M) basing within 25% of highs."""
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    
+    # Condition: 35%+ in either 3M or 6M
+    mom_cond = (merged['Return_3M'] >= 35) | (merged['Return_6M'] >= 35)
+    # Condition: Max 25% drawdown
+    base_cond = merged['Pct_From_High'] >= -25.0
+    
+    filtered = merged[mom_cond & base_cond].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
+    
+    return filtered
+
+def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """Finds stocks with tight MA convergence (10EMA, 20EMA, 50SMA) acting as a launch pad."""
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    
+    # Need valid MAs
+    valid_ma = merged[['EMA_10', 'EMA_20', 'SMA_50', 'SMA_200']].notna().all(axis=1)
+    df = merged[valid_ma].copy()
+    
+    if df.empty: return df
+    
+    # Calculate MA cluster min and max
+    df['MA_Max'] = df[['EMA_10', 'EMA_20', 'SMA_50']].max(axis=1)
+    df['MA_Min'] = df[['EMA_10', 'EMA_20', 'SMA_50']].min(axis=1)
+    
+    # Bunching condition: Max MA is within 5% of Min MA
+    bunching_cond = (df['MA_Max'] / df['MA_Min'] - 1) <= 0.05
+    
+    # Price resting on the pad: Price near the MAs (not > 5% above the max MA, and not < 2% below min MA)
+    price_cond = (df['Current_Price'] <= df['MA_Max'] * 1.05) & (df['Current_Price'] >= df['MA_Min'] * 0.98)
+    
+    # Uptrend condition
+    trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'])
+    
+    filtered = df[bunching_cond & price_cond & trend_cond].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
+    
+    # Clean up temp columns
+    filtered = filtered.drop(columns=['MA_Max', 'MA_Min'])
+    
+    return filtered

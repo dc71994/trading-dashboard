@@ -126,6 +126,8 @@ def generate_dashboard(
     sector_rs: pd.DataFrame,
     leaders: pd.DataFrame,
     history_df: pd.DataFrame = None,
+    basing_df: pd.DataFrame = None,
+    launch_pad_df: pd.DataFrame = None,
 ) -> str:
     ensure_output_dir()
     date_stamp = get_date_stamp()
@@ -215,6 +217,50 @@ def generate_dashboard(
             <td>{_format_ma(price, row.get('SMA_200'))}</td>
             <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
         </tr>"""
+
+    # ── Build basing rows ──
+    basing_rows = ""
+    basing_count = 0
+    if basing_df is not None:
+        basing_count = len(basing_df)
+        for i, (_, row) in enumerate(basing_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            basing_rows += f"""
+            <tr data-pct-from-high="{row.get('Pct_From_High', 0):.2f}" data-industry="{row.get('Industry', 'Unknown')}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+                <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
+                <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
+                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
+
+    # ── Build launch pad rows ──
+    launch_pad_rows = ""
+    launch_pad_count = 0
+    if launch_pad_df is not None:
+        launch_pad_count = len(launch_pad_df)
+        for i, (_, row) in enumerate(launch_pad_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            launch_pad_rows += f"""
+            <tr data-industry="{row.get('Industry', 'Unknown')}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td>{_format_ma(price, row.get('EMA_10'))}</td>
+                <td>{_format_ma(price, row.get('EMA_20'))}</td>
+                <td>{_format_ma(price, row.get('SMA_50'))}</td>
+                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
 
     # ── Assemble stats ──
     total_stocks = len(stock_rs)
@@ -405,6 +451,8 @@ def generate_dashboard(
     <button class="tab-btn" onclick="showTab('industries')">// Top Industries</button>
     <button class="tab-btn" onclick="showTab('stocks')">// Top Stocks</button>
     <button class="tab-btn" onclick="showTab('leaders')">// Leaders × Top Groups</button>
+    <button class="tab-btn" onclick="showTab('basing')" style="color:var(--accent);">// Basing Setups</button>
+    <button class="tab-btn" onclick="showTab('launchpad')" style="color:var(--accent);">// Launch Pads</button>
   </div>
   
   <!-- Tab: Industry Trend -->
@@ -554,6 +602,84 @@ def generate_dashboard(
     </div>
   </div>
 
+  <!-- Tab: Basing Setups -->
+  <div id="tab-basing" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num">05</span>
+          <span class="section-title">High Momentum Basing ({basing_count})</span>
+          <select id="base-depth-filter" onchange="filterBasing()" style="margin-left:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="25">Max 25% Depth</option>
+            <option value="20">Max 20% Depth</option>
+            <option value="15">Max 15% Depth</option>
+            <option value="10">Max 10% Depth</option>
+          </select>
+          <span id="basing-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-basing')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table id="table-basing">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>% From High</th>
+              <th>3M</th>
+              <th>6M</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{basing_rows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Launch Pads -->
+  <div id="tab-launchpad" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num">06</span>
+          <span class="section-title">Launch Pad Setups ({launch_pad_count})</span>
+          <span id="launchpad-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-launchpad')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table id="table-launchpad">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>10 EMA</th>
+              <th>20 EMA</th>
+              <th>50 SMA</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{launch_pad_rows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -603,6 +729,56 @@ def generate_dashboard(
     document.getElementById('tab-' + name).classList.add('active');
     event.target.classList.add('active');
   }}
+
+  // ── Basing Filter & Insights ──
+  function filterBasing() {{
+    const maxDepth = parseFloat(document.getElementById('base-depth-filter').value) * -1;
+    const rows = document.querySelectorAll('#table-basing tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {{
+      const pctFromHigh = parseFloat(row.getAttribute('data-pct-from-high'));
+      if (pctFromHigh >= maxDepth && pctFromHigh <= 0) {{
+        row.style.display = '';
+        visibleCount++;
+      }} else {{
+        row.style.display = 'none';
+      }}
+    }});
+    
+    updateInsights('table-basing', 'basing-insights');
+  }}
+  
+  function updateInsights(tableId, spanId) {{
+    const rows = document.querySelectorAll(`#${{tableId}} tbody tr`);
+    const counts = {{}};
+    let totalVisible = 0;
+    
+    rows.forEach(row => {{
+      if (row.style.display !== 'none') {{
+        const ind = row.getAttribute('data-industry');
+        if (ind && ind !== 'Unknown' && ind !== '—') {{
+          counts[ind] = (counts[ind] || 0) + 1;
+        }}
+        totalVisible++;
+      }}
+    }});
+    
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const span = document.getElementById(spanId);
+    if (span && sorted.length > 0) {{
+      const txt = sorted.map(s => `${{s[0]}} (${{s[1]}})`).join(', ');
+      span.textContent = `Top Industries: ${{txt}}`;
+    }} else if (span) {{
+      span.textContent = '';
+    }}
+  }}
+  
+  // Run on load
+  setTimeout(() => {{
+    filterBasing();
+    updateInsights('table-launchpad', 'launchpad-insights');
+  }}, 100);
 
   // ── Table sorting ──
   document.querySelectorAll('table').forEach(table => {{

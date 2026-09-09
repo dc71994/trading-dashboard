@@ -682,81 +682,81 @@ Date,Industry,Rank,Median_RS
 2026-09-09,Biotechnology,2,80.0
 2026-09-09,Electronics Distributors,3,88.5
 2026-09-09,Electronic Components,4,86.5
-2026-09-09,Electronic Production Equipment,5,84.0
-2026-09-09,Medical Specialties,6,78.0
-2026-09-09,Internet Retail,7,78.0
-2026-09-09,Specialty Stores,8,78.0
-2026-09-09,Containers/Packaging,9,79.0
-2026-09-09,Pharmaceuticals: Major,10,71.0
+2026-09-09,Medical Specialties,5,77.0
+2026-09-09,Internet Retail,6,78.0
+2026-09-09,Electronic Production Equipment,7,84.0
+2026-09-09,Specialty Stores,8,77.0
+2026-09-09,Containers/Packaging,9,80.0
+2026-09-09,Pharmaceuticals: Major,10,72.0
 2026-09-09,Metal Fabrication,11,70.0
 2026-09-09,Chemicals: Specialty,12,73.0
-2026-09-09,Integrated Oil,13,68.0
+2026-09-09,Integrated Oil,13,68.5
 2026-09-09,Internet Software/Services,14,68.0
-2026-09-09,Medical/Nursing Services,15,66.0
-2026-09-09,Auto Parts: OEM,16,65.5
-2026-09-09,Electrical Products,17,65.0
-2026-09-09,Textiles,18,64.5
-2026-09-09,Wholesale Distributors,19,67.0
+2026-09-09,Medical/Nursing Services,15,65.0
+2026-09-09,Electrical Products,16,65.5
+2026-09-09,Auto Parts: OEM,17,65.0
+2026-09-09,Wholesale Distributors,18,68.0
+2026-09-09,Textiles,19,64.5
 2026-09-09,Other Consumer Specialties,20,59.5
 2026-09-09,Industrial Specialties,21,64.0
 2026-09-09,Telecommunications Equipment,22,54.0
-2026-09-09,Aerospace & Defense,23,63.0
-2026-09-09,Trucks/Construction/Farm Machinery,24,59.0
-2026-09-09,Agricultural Commodities/Milling,25,60.5
-2026-09-09,Steel,26,54.5
-2026-09-09,Food: Meat/Fish/Dairy,27,62.5
-2026-09-09,Regional Banks,28,52.5
-2026-09-09,Chemicals: Major Diversified,29,53.0
-2026-09-09,Pharmaceuticals: Other,30,46.5
+2026-09-09,Aerospace & Defense,23,62.5
+2026-09-09,Trucks/Construction/Farm Machinery,24,59.5
+2026-09-09,Agricultural Commodities/Milling,25,60.0
+2026-09-09,Food: Meat/Fish/Dairy,26,62.5
+2026-09-09,Regional Banks,27,52.5
+2026-09-09,Steel,28,53.5
+2026-09-09,Pharmaceuticals: Other,29,46.0
+2026-09-09,Chemicals: Major Diversified,30,52.5
 2026-09-09,Multi-Line Insurance,31,56.0
 2026-09-09,Restaurants,32,65.0
 2026-09-09,Investment Banks/Brokers,33,51.0
-2026-09-09,Industrial Machinery,34,49.0
-2026-09-09,Movies/Entertainment,35,58.0
-2026-09-09,Hospital/Nursing Management,36,46.0
-2026-09-09,Other Transportation,37,41.5
-2026-09-09,Building Products,38,44.5
-2026-09-09,Finance/Rental/Leasing,39,49.0
-2026-09-09,Food: Specialty/Candy,40,45.5
-2026-09-09,Packaged Software,41,47.0
-2026-09-09,Electronic Equipment/Instruments,42,41.0
-2026-09-09,Food: Major Diversified,43,52.0
+2026-09-09,Industrial Machinery,34,48.0
+2026-09-09,Movies/Entertainment,35,57.5
+2026-09-09,Other Transportation,36,42.0
+2026-09-09,Hospital/Nursing Management,37,46.0
+2026-09-09,Food: Specialty/Candy,38,45.5
+2026-09-09,Miscellaneous Commercial Services,39,53.5
+2026-09-09,Finance/Rental/Leasing,40,48.5
+2026-09-09,Packaged Software,41,46.0
+2026-09-09,Food: Major Diversified,42,51.5
+2026-09-09,Electronic Equipment/Instruments,43,40.0
 2026-09-09,Home Furnishings,44,44.0
-2026-09-09,Electronics/Appliances,45,36.0
-2026-09-09,Miscellaneous Commercial Services,46,50.0
+2026-09-09,Building Products,45,45.0
+2026-09-09,Electronics/Appliances,46,35.5
 2026-09-09,Semiconductors,47,47.0
-2026-09-09,Real Estate Development,48,49.0
-2026-09-09,Pulp & Paper,49,54.5
+2026-09-09,Pulp & Paper,48,54.0
+2026-09-09,Real Estate Development,49,48.5
 2026-09-09,Motor Vehicles,50,40.0
-2026-09-09,Miscellaneous Manufacturing,51,40.0
+2026-09-09,Miscellaneous Manufacturing,51,39.5
 2026-09-09,Air Freight/Couriers,52,37.0
 2026-09-09,Information Technology Services,53,35.0
 2026-09-09,Apparel/Footwear,54,39.5
-2026-09-09,Other Metals/Minerals,55,33.5
-2026-09-09,Oil Refining/Marketing,56,32.0
-2026-09-09,Office Equipment/Supplies,57,31.0
-2026-09-09,Financial Conglomerates,58,45.0
-2026-09-09,Engineering & Construction,59,32.0
-2026-09-09,Beverages: Alcoholic,60,29.0
-2026-09-09,Investment Managers,61,25.5
-2026-09-09,Homebuilding,62,47.0
-2026-09-09,Electric Utilities,63,30.0
-2026-09-09,Life/Health Insurance,64,36.0
-2026-09-09,Gas Distributors,65,39.0
-2026-09-09,Alternative Power Generation,66,32.0
-2026-09-09,Hotels/Resorts/Cruise lines,67,25.0
-2026-09-09,Major Banks,68,27.0
-2026-09-09,Automotive Aftermarket,69,24.0
-2026-09-09,Marine Shipping,70,37.0
-2026-09-09,Chemicals: Agricultural,71,25.0
+2026-09-09,Other Metals/Minerals,55,33.0
+2026-09-09,Oil Refining/Marketing,56,31.0
+2026-09-09,Engineering & Construction,57,32.0
+2026-09-09,Office Equipment/Supplies,58,30.0
+2026-09-09,Financial Conglomerates,59,44.0
+2026-09-09,Investment Managers,60,25.5
+2026-09-09,Homebuilding,61,47.0
+2026-09-09,Life/Health Insurance,62,36.0
+2026-09-09,Gas Distributors,63,39.0
+2026-09-09,Electric Utilities,64,28.5
+2026-09-09,Beverages: Alcoholic,65,29.0
+2026-09-09,Alternative Power Generation,66,31.5
+2026-09-09,Major Banks,67,27.0
+2026-09-09,Automotive Aftermarket,68,24.0
+2026-09-09,Hotels/Resorts/Cruise lines,69,24.0
+2026-09-09,Marine Shipping,70,38.0
+2026-09-09,Chemicals: Agricultural,71,26.0
 2026-09-09,Industrial Conglomerates,72,33.0
-2026-09-09,Major Telecommunications,73,31.0
-2026-09-09,Apparel/Footwear Retail,74,17.5
-2026-09-09,Other Consumer Services,75,26.5
-2026-09-09,Trucking,76,12.0
+2026-09-09,Major Telecommunications,73,31.5
+2026-09-09,Trucking,74,14.0
+2026-09-09,Apparel/Footwear Retail,75,17.0
+2026-09-09,Other Consumer Services,76,26.5
 2026-09-09,Construction Materials,77,19.5
-2026-09-09,Household/Personal Care,78,10.5
-2026-09-09,Aluminum,79,22.0
-2026-09-09,Forest Products,80,13.5
+2026-09-09,Aluminum,78,22.0
+2026-09-09,Household/Personal Care,79,10.0
+2026-09-09,Forest Products,80,14.0
 2026-09-09,Data Processing Services,81,13.0
 2026-09-09,Tobacco,82,11.0

@@ -24,6 +24,8 @@ from .rs_engine import (
     calculate_industry_rs,
     calculate_sector_index_rs,
     find_leaders_in_leading_groups,
+    find_basing_stocks,
+    find_launch_pad_stocks,
 )
 from .report import (
     export_all_stocks,
@@ -181,14 +183,21 @@ def main():
     full_hist.to_csv(history_file, index=False)
     
     # ------------------------
+    
+    basing = find_basing_stocks(stock_rs, universe)
+    launch_pad = find_launch_pad_stocks(stock_rs, universe)
 
     export_all_stocks(stock_rs)
     export_top_industries(industry_rs)
     export_sector_csv(sector_rs)
     export_leaders(leaders)
+    
+    date_stamp = datetime.now().strftime('%Y-%m-%d')
+    basing.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Basing_Setups_{date_stamp}.csv'), index=False)
+    launch_pad.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Launch_Pads_{date_stamp}.csv'), index=False)
 
     if not args.no_dashboard:
-        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist)
+        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist, basing_df=basing, launch_pad_df=launch_pad)
         print(f"  → {html_path}")
     else:
         print("  (HTML dashboard skipped)")
