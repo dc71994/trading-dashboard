@@ -189,7 +189,6 @@ ANMOL.NS,Distribution Services,Wholesale Distributors
 ANNAPURNA.NS,Consumer Non-Durables,Food: Specialty/Candy
 ANNU.NS,Industrial Services,Engineering & Construction
 ANONDITA.NS,Producer Manufacturing,Miscellaneous Manufacturing
-ANOND_RE.NS,,
 ANSALAPI.NS,Finance,Real Estate Development
 ANSALBU.NS,Consumer Durables,Homebuilding
 ANTELOPUS.NS,Energy Minerals,Integrated Oil
@@ -256,7 +255,6 @@ ASAHIINDIA.NS,Consumer Durables,Home Furnishings
 ASAHISONG.NS,Process Industries,Chemicals: Specialty
 ASAL.NS,Producer Manufacturing,Auto Parts: OEM
 ASALCBR.NS,Consumer Non-Durables,Beverages: Alcoholic
-ASCOM.NS,Finance,Finance/Rental/Leasing
 ASHALOG.NS,Transportation,Air Freight/Couriers
 ASHAPURMIN.NS,Non-Energy Minerals,Other Metals/Minerals
 ASHIANA.NS,Finance,Real Estate Development
@@ -638,6 +636,7 @@ CREATIVEYE.NS,Consumer Services,Movies/Entertainment
 CREDENT.NS,Transportation,Air Freight/Couriers
 CREDITACC.NS,Finance,Finance/Rental/Leasing
 CREST.NS,Finance,Investment Managers
+CRESTO.NS,Consumer Services,Movies/Entertainment
 CRISIL.NS,Technology Services,Internet Software/Services
 CRIZAC.NS,Technology Services,Internet Software/Services
 CROMPTON.NS,Producer Manufacturing,Industrial Machinery
@@ -1366,7 +1365,6 @@ JAYSREETEA.NS,Process Industries,Agricultural Commodities/Milling
 JBMA.NS,Producer Manufacturing,Auto Parts: OEM
 JENBURPH.NS,Health Technology,Pharmaceuticals: Major
 JETFREIGHT.NS,Transportation,Airlines
-JETKNIT.NS,Consumer Non-Durables,Apparel/Footwear
 JEYYAM.NS,Consumer Non-Durables,Food: Major Diversified
 JFLLIFE.NS,Health Technology,Pharmaceuticals: Major
 JGCHEM.NS,Process Industries,Chemicals: Specialty
@@ -1426,7 +1424,6 @@ KAKATCEM.NS,Non-Energy Minerals,Construction Materials
 KALAMANDIR.NS,Retail Trade,Apparel/Footwear Retail
 KALANA.NS,Non-Energy Minerals,Steel
 KALPATARU.NS,Finance,Real Estate Development
-KALYANI.NS,Distribution Services,Wholesale Distributors
 KALYANIFRG.NS,Producer Manufacturing,Auto Parts: OEM
 KALYANKJIL.NS,Retail Trade,Specialty Stores
 KAMAHOLD.NS,Process Industries,Industrial Specialties
@@ -1491,6 +1488,7 @@ KITEX.NS,Process Industries,Textiles
 KJMCFIN.NS,Finance,Investment Banks/Brokers
 KKCL.NS,Consumer Non-Durables,Apparel/Footwear
 KKJEWELS.NS,Retail Trade,Specialty Stores
+KKVAPOW.NS,Utilities,Electric Utilities
 KLBRENG_B.NS,Producer Manufacturing,Industrial Machinery
 KLL.NS,Transportation,Air Freight/Couriers
 KMCSHIL.NS,Health Services,Hospital/Nursing Management
@@ -1758,7 +1756,6 @@ MILKYMIST.NS,Consumer Non-Durables,Food: Meat/Fish/Dairy
 MILTON.NS,Non-Energy Minerals,Forest Products
 MINALIND.NS,Consumer Durables,Other Consumer Specialties
 MINDACORP.NS,Producer Manufacturing,Auto Parts: OEM
-MINDPOOL.NS,Commercial Services,Personnel Services
 MINDSPACE.RR.NS,Finance,Real Estate Investment Trusts
 MINDTECK.NS,Technology Services,Information Technology Services
 MIRZAINT.NS,Consumer Non-Durables,Apparel/Footwear
@@ -2193,6 +2190,7 @@ QMSMEDI.NS,Distribution Services,Medical Distributors
 QPOWER.NS,Producer Manufacturing,Electrical Products
 QUADFUTURE.NS,Producer Manufacturing,Electrical Products
 QUADPRO.NS,Commercial Services,Miscellaneous Commercial Services
+QUALIANCE.NS,Consumer Non-Durables,Apparel/Footwear
 QUESS.NS,Commercial Services,Personnel Services
 QUESTLAB.NS,Health Technology,Pharmaceuticals: Major
 QUICKHEAL.NS,Technology Services,Packaged Software
@@ -2559,7 +2557,6 @@ SILGO.NS,Consumer Durables,Other Consumer Specialties
 SILINV.NS,Finance,Financial Conglomerates
 SILKFLEX.NS,Distribution Services,Wholesale Distributors
 SILKY.NS,Process Industries,Textiles
-SILLYMONKS.NS,Consumer Services,Movies/Entertainment
 SILVERTUC.NS,Technology Services,Packaged Software
 SIMBHALS.NS,Process Industries,Agricultural Commodities/Milling
 SIMCA.NS,Commercial Services,Advertising/Marketing Services
@@ -2868,7 +2865,6 @@ TRANSCOR.NS,Commercial Services,Miscellaneous Commercial Services
 TRANSPEK.NS,Process Industries,Chemicals: Specialty
 TRANSRAILL.NS,Industrial Services,Engineering & Construction
 TRANSTEEL.NS,Producer Manufacturing,Office Equipment/Supplies
-TRANSWIND.NS,Industrial Services,Engineering & Construction
 TRANSWORLD.NS,Transportation,Marine Shipping
 TRAVELFOOD.NS,Consumer Services,Restaurants
 TREEHOUSE.NS,Consumer Services,Other Consumer Services

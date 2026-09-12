@@ -74,6 +74,33 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         sma_100 = close_series.rolling(window=100).mean().iloc[-1] if len(close_series) >= 100 else None
         # 200 SMA
         sma_200 = close_series.rolling(window=200).mean().iloc[-1] if len(close_series) >= 200 else None
+        
+        # --- VCP / Basing specific metrics ---
+        days_since_peak = 0
+        max_base_dd = 0.0
+        prior_leg_gain = 0.0
+        vol_dry_up = False
+        
+        if len(df) > 80:
+            peak_idx = int(df['High'].argmax())
+            days_since_peak = len(df) - 1 - peak_idx
+            
+            if days_since_peak > 0:
+                base_low = df['Low'].iloc[peak_idx:].min()
+                max_base_dd = ((base_low / high_52w) - 1) * 100 if high_52w > 0 else 0
+            else:
+                max_base_dd = 0
+                
+            start_of_run_idx = max(0, peak_idx - 40)
+            price_before_run = df['Close'].iloc[start_of_run_idx]
+            peak_close = df['Close'].iloc[peak_idx]
+            prior_leg_gain = ((peak_close / price_before_run) - 1) * 100 if price_before_run > 0 else 0
+            
+            # Volume dry up: latest 5 days average volume < 50% of 50-day average volume
+            if len(df) >= 50:
+                vol_5d = df['Volume'].iloc[-5:].mean()
+                vol_50d = df['Volume'].iloc[-50:].mean()
+                vol_dry_up = (vol_5d < (vol_50d * 0.6))
 
         results.append({
             'Ticker': ticker,
@@ -91,7 +118,12 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'SMA_50': sma_50,
             'SMA_100': sma_100,
             'SMA_200': sma_200,
+            'Days_Since_Peak': days_since_peak,
+            'Max_Base_DD': max_base_dd,
+            'Prior_Leg_Gain': prior_leg_gain,
+            'Vol_Dry_Up': vol_dry_up
         })
+
         
     res_df = pd.DataFrame(results)
     
@@ -100,7 +132,7 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Ticker', 'Current_Price', 'High_52W', 'Pct_From_High', 'Avg_Volume',
             'Return_1W', 'Return_1M', 'Return_3M', 'Return_6M',
             'RS_Composite', 'RS_Percentile',
-            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200'
+            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
         ])
         
     # Rank and calculate percentile (0-99)
@@ -286,7 +318,7 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     
     cols = ['Ticker', 'Industry', 'Sector', 'Current_Price', 'High_52W', 'Pct_From_High', 
             'Return_3M', 'Return_6M', 'RS_Percentile', 'Industry_Rank', 'Avg_Volume',
-            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200']
+            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up']
     
     # Only return columns that exist (in case of changes)
     existing_cols = [col for col in cols if col in filtered.columns]
@@ -294,52 +326,67 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     return filtered[existing_cols]
 
 def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks with high momentum (>35% in 3M or 6M) basing within 25% of highs."""
+    """Finds stocks with strict VCP basing rules (Prior run >30%, duration >40 days, Base DD <25%)."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
     merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
     
-    # Condition: 35%+ in either 3M or 6M
-    mom_cond = (merged['Return_3M'] >= 35) | (merged['Return_6M'] >= 35)
-    # Condition: Max 25% drawdown
-    base_cond = merged['Pct_From_High'] >= -25.0
+    # Needs to be a valid stock that has the VCP columns
+    if 'Days_Since_Peak' not in merged.columns:
+        return pd.DataFrame()
+        
+    base_cond = (merged['Days_Since_Peak'] >= 40)
+    dd_cond = (merged['Max_Base_DD'] >= -25.0) & (merged['Pct_From_High'] >= -25.0)
+    prior_leg_cond = (merged['Prior_Leg_Gain'] >= 30.0)
     
-    filtered = merged[mom_cond & base_cond].copy()
+    filtered = merged[base_cond & dd_cond & prior_leg_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     return filtered
 
 def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks with tight MA convergence (10EMA, 20EMA, 50SMA) acting as a launch pad."""
+    """Finds stocks resting on MA clusters (launch pad) with strict VCP basing context."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
     merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
     
-    # Need valid MAs
+    if 'Days_Since_Peak' not in merged.columns:
+        return pd.DataFrame()
+    
+    # Must meet core VCP criteria first (slightly looser for launchpad, e.g. duration >20)
+    base_cond = (merged['Days_Since_Peak'] >= 20)
+    dd_cond = (merged['Max_Base_DD'] >= -25.0) & (merged['Pct_From_High'] >= -25.0)
+    prior_leg_cond = (merged['Prior_Leg_Gain'] >= 30.0)
+    
+    # Valid MAs
     valid_ma = merged[['EMA_10', 'EMA_20', 'SMA_50', 'SMA_200']].notna().all(axis=1)
-    df = merged[valid_ma].copy()
+    df = merged[base_cond & dd_cond & prior_leg_cond & valid_ma].copy()
     
     if df.empty: return df
     
-    # Calculate MA cluster min and max
+    # Calculate MA cluster min and max (tightness)
     df['MA_Max'] = df[['EMA_10', 'EMA_20', 'SMA_50']].max(axis=1)
     df['MA_Min'] = df[['EMA_10', 'EMA_20', 'SMA_50']].min(axis=1)
     
     # Bunching condition: Max MA is within 5% of Min MA
     bunching_cond = (df['MA_Max'] / df['MA_Min'] - 1) <= 0.05
     
-    # Price resting on the pad: Price near the MAs (not > 5% above the max MA, and not < 2% below min MA)
+    # Price resting on the pad
     price_cond = (df['Current_Price'] <= df['MA_Max'] * 1.05) & (df['Current_Price'] >= df['MA_Min'] * 0.98)
     
     # Uptrend condition
     trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'])
     
-    filtered = df[bunching_cond & price_cond & trend_cond].copy()
+    # Require volume contraction
+    vol_cond = df['Vol_Dry_Up'] == True
+    
+    filtered = df[bunching_cond & price_cond & trend_cond & vol_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     # Clean up temp columns
     filtered = filtered.drop(columns=['MA_Max', 'MA_Min'])
     
     return filtered
+

@@ -126,6 +126,7 @@ def generate_dashboard(
     sector_rs: pd.DataFrame,
     leaders: pd.DataFrame,
     history_df: pd.DataFrame = None,
+    sector_history_df: pd.DataFrame = None,
     basing_df: pd.DataFrame = None,
     launch_pad_df: pd.DataFrame = None,
 ) -> str:
@@ -136,9 +137,14 @@ def generate_dashboard(
     # ── History Data for Chart.js ──
     history_json = "[]"
     if history_df is not None and not history_df.empty:
-        # Sort by date
         history_df = history_df.sort_values("Date")
         history_json = history_df.to_json(orient="records")
+        
+    sector_history_json = "[]"
+    if sector_history_df is not None and not sector_history_df.empty:
+        sector_history_df = sector_history_df.sort_values("Date")
+        sector_history_json = sector_history_df.to_json(orient="records")
+
 
     # ── Build sector index heatmap rows ──
     sector_rows = ""
@@ -466,6 +472,16 @@ def generate_dashboard(
         <canvas id="industryChart"></canvas>
       </div>
     </div>
+    
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <span class="section-num">00.5</span>
+        <span class="section-title">Historical Sector Rotation</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="sectorChart"></canvas>
+      </div>
+    </div>
   </div>
 
   <!-- Tab: Sector Index RS -->
@@ -738,7 +754,7 @@ def generate_dashboard(
     
     rows.forEach(row => {{
       const pctFromHigh = parseFloat(row.getAttribute('data-pct-from-high'));
-      if (pctFromHigh >= maxDepth && pctFromHigh <= 0) {{
+      if (pctFromHigh >= maxDepth) {{
         row.style.display = '';
         visibleCount++;
       }} else {{
@@ -810,11 +826,11 @@ def generate_dashboard(
   
   // ── Chart.js Logic ──
   const historyData = {history_json};
+  const sectorHistoryData = {sector_history_json};
   
   if (historyData.length > 0) {{
       // Group by Industry
       const industries = [...new Set(historyData.map(d => d.Industry))];
-      // Get the latest date to find current top 10
       const dates = [...new Set(historyData.map(d => d.Date))].sort();
       const latestDate = dates[dates.length - 1];
       
@@ -839,19 +855,14 @@ def generate_dashboard(
               label: ind,
               data: indData,
               borderColor: colors[i % colors.length],
-              backgroundColor: colors[i % colors.length],
-              tension: 0.3,
+              backgroundColor: 'transparent',
               borderWidth: 2,
               pointRadius: 3,
-              pointHoverRadius: 5
+              tension: 0.1
           }};
       }});
       
-      const ctx = document.getElementById('industryChart').getContext('2d');
-      Chart.defaults.color = '#6b6b7b';
-      Chart.defaults.font.family = "'Inter', sans-serif";
-      
-      new Chart(ctx, {{
+      new Chart(document.getElementById('industryChart'), {{
           type: 'line',
           data: {{
               labels: dates,
@@ -860,36 +871,74 @@ def generate_dashboard(
           options: {{
               responsive: true,
               maintainAspectRatio: false,
-              interaction: {{
-                  mode: 'index',
-                  intersect: false,
-              }},
               plugins: {{
                   legend: {{
                       position: 'right',
-                      labels: {{ boxWidth: 12, usePointStyle: true, padding: 15 }}
-                  }},
-                  tooltip: {{
-                      backgroundColor: '#1a1a26',
-                      titleColor: '#e8e8ed',
-                      bodyColor: '#e8e8ed',
-                      borderColor: 'rgba(255,255,255,0.06)',
-                      borderWidth: 1
+                      labels: {{ color: '#8b9bb4', font: {{ family: "'JetBrains Mono', monospace", size: 10 }} }}
                   }}
               }},
               scales: {{
-                  y: {{
-                      grid: {{ color: 'rgba(255,255,255,0.03)' }},
-                      title: {{ display: true, text: 'Median RS Score' }}
-                  }},
-                  x: {{
-                      grid: {{ color: 'rgba(255,255,255,0.03)' }}
-                  }}
+                  x: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }},
+                  y: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }}
               }}
           }}
       }});
-  }} else {{
-      document.getElementById('industryChart').parentElement.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding-top:40px;">No historical data available yet. Check back after a few updates!</div>';
+  }}
+  
+  if (sectorHistoryData && sectorHistoryData.length > 0) {{
+      // Group by Sector
+      const dates = [...new Set(sectorHistoryData.map(d => d.Date))].sort();
+      const latestDate = dates[dates.length - 1];
+      
+      const latestRanks = sectorHistoryData.filter(d => d.Date === latestDate)
+                                     .sort((a, b) => a.Rank - b.Rank)
+                                     .map(d => d.Sector);
+                                     
+      const topSectors = latestRanks.slice(0, 10);
+      
+      const colors = [
+          '#00e676', '#ff4081', '#29b6f6', '#ffee58', '#ab47bc',
+          '#ff7043', '#26a69a', '#ec407a', '#7e57c2', '#9ccc65'
+      ];
+      
+      const datasets = topSectors.map((sec, i) => {{
+          const secData = dates.map(date => {{
+              const row = sectorHistoryData.find(d => d.Date === date && d.Sector === sec);
+              return row ? row.Composite_RS : null;
+          }});
+          
+          return {{
+              label: sec,
+              data: secData,
+              borderColor: colors[i % colors.length],
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              pointRadius: 3,
+              tension: 0.1
+          }};
+      }});
+      
+      new Chart(document.getElementById('sectorChart'), {{
+          type: 'line',
+          data: {{
+              labels: dates,
+              datasets: datasets
+          }},
+          options: {{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {{
+                  legend: {{
+                      position: 'right',
+                      labels: {{ color: '#8b9bb4', font: {{ family: "'JetBrains Mono', monospace", size: 10 }} }}
+                  }}
+              }},
+              scales: {{
+                  x: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }},
+                  y: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }}
+              }}
+          }}
+      }});
   }}
 </script>
 </body>
