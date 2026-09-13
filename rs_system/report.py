@@ -465,20 +465,28 @@ def generate_dashboard(
   <div id="tab-trend" class="tab-panel active">
     <div class="section" style="margin-top: 24px;">
       <div class="section-header">
-        <span class="section-num">00</span>
-        <span class="section-title">Historical Rotation (Top 10 Industries)</span>
+        <div class="section-header-left">
+          <span class="section-num">00</span>
+          <span class="section-title">Industry RS Rotation</span>
+          <select id="industry-count-filter" onchange="rebuildIndustryChart()" style="margin-left:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 12px; border-radius:4px; font-family:var(--mono); font-size:12px; cursor:pointer;">
+            <option value="10">Top 10</option>
+            <option value="20">Top 20</option>
+          </select>
+        </div>
       </div>
-      <div class="chart-container">
+      <div class="chart-container" style="height:480px;">
         <canvas id="industryChart"></canvas>
       </div>
     </div>
     
     <div class="section" style="margin-top: 24px;">
       <div class="section-header">
-        <span class="section-num">00.5</span>
-        <span class="section-title">Historical Sector Rotation</span>
+        <div class="section-header-left">
+          <span class="section-num">01</span>
+          <span class="section-title">Sector Index RS Rotation (vs Nifty 50)</span>
+        </div>
       </div>
-      <div class="chart-container">
+      <div class="chart-container" style="height:480px;">
         <canvas id="sectorChart"></canvas>
       </div>
     </div>
@@ -828,9 +836,117 @@ def generate_dashboard(
   const historyData = {history_json};
   const sectorHistoryData = {sector_history_json};
   
-  if (historyData.length > 0) {{
-      // Group by Industry
-      const industries = [...new Set(historyData.map(d => d.Industry))];
+  const chartColors = [
+      '#00e676', '#ff4081', '#29b6f6', '#ffee58', '#ab47bc',
+      '#ff7043', '#26a69a', '#ec407a', '#7e57c2', '#9ccc65',
+      '#f06292', '#4dd0e1', '#aed581', '#ffb74d', '#ce93d8',
+      '#80cbc4', '#fff176', '#e57373', '#64b5f6', '#81c784'
+  ];
+  
+  // Shorten long industry names for chart legend
+  function shortName(name) {{
+      const map = {{
+          'Electronic Production Equipment': 'Elec Prod Equip',
+          'Electronics Distributors': 'Elec Distrib',
+          'Electronic Components': 'Elec Components',
+          'Electronic Equipment/Instruments': 'Elec Equip/Instr',
+          'Oilfield Services/Equipment': 'Oilfield Svcs',
+          'Chemicals: Specialty': 'Specialty Chem',
+          'Chemicals: Major': 'Major Chem',
+          'Pharmaceuticals: Major': 'Pharma Major',
+          'Pharmaceuticals: Other': 'Pharma Other',
+          'Wholesale Distributors': 'Wholesale Dist',
+          'Other Consumer Specialties': 'Consumer Spec',
+          'Investment Banks/Brokers': 'Inv Banks/Brkrs',
+          'Trucks/Construction/Farm Machinery': 'Trucks/Farm Mach',
+          'Oil Refining/Marketing': 'Oil Refining',
+          'Aerospace & Defense': 'Aero & Defense',
+          'Internet Software/Services': 'Internet SW/Svcs',
+          'Medical/Nursing Services': 'Medical Svcs',
+          'Nifty Financial Services': 'Fin Services',
+          'Nifty Consumer Durables': 'Consumer Dur',
+          'Nifty Private Bank': 'Private Bank',
+          'Nifty PSU Bank': 'PSU Bank',
+          'Nifty Oil & Gas': 'Oil & Gas',
+          'Nifty Commodities': 'Commodities',
+          'Nifty Consumption': 'Consumption',
+          'Nifty Healthcare': 'Healthcare',
+      }};
+      return map[name] || name.replace('Nifty ', '');
+  }}
+  
+  // Common chart config
+  function getChartOptions(yLabel) {{
+      return {{
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {{
+              mode: 'index',
+              intersect: false
+          }},
+          plugins: {{
+              legend: {{
+                  position: 'bottom',
+                  labels: {{
+                      color: '#8b9bb4',
+                      font: {{ family: "'JetBrains Mono', monospace", size: 11 }},
+                      padding: 16,
+                      usePointStyle: true,
+                      pointStyle: 'circle'
+                  }}
+              }},
+              tooltip: {{
+                  backgroundColor: '#1a1a26',
+                  titleColor: '#e8e8ed',
+                  bodyColor: '#8b9bb4',
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  borderWidth: 1,
+                  titleFont: {{ family: "'JetBrains Mono', monospace", size: 12 }},
+                  bodyFont: {{ family: "'JetBrains Mono', monospace", size: 11 }},
+                  padding: 12,
+                  callbacks: {{
+                      label: function(ctx) {{
+                          return ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) : '—');
+                      }}
+                  }}
+              }}
+          }},
+          scales: {{
+              x: {{
+                  grid: {{ color: 'rgba(255,255,255,0.04)' }},
+                  ticks: {{
+                      color: '#6b6b7b',
+                      font: {{ family: "'JetBrains Mono', monospace", size: 10 }},
+                      maxRotation: 45,
+                      autoSkip: true,
+                      maxTicksLimit: 15
+                  }}
+              }},
+              y: {{
+                  grid: {{ color: 'rgba(255,255,255,0.04)' }},
+                  ticks: {{
+                      color: '#6b6b7b',
+                      font: {{ family: "'JetBrains Mono', monospace", size: 10 }}
+                  }},
+                  title: {{
+                      display: !!yLabel,
+                      text: yLabel || '',
+                      color: '#6b6b7b',
+                      font: {{ family: "'JetBrains Mono', monospace", size: 11 }}
+                  }}
+              }}
+          }}
+      }};
+  }}
+  
+  // ── Industry Chart (with Top 10/20 toggle) ──
+  let industryChartInstance = null;
+  
+  function rebuildIndustryChart() {{
+      const count = parseInt(document.getElementById('industry-count-filter').value) || 10;
+      
+      if (historyData.length === 0) return;
+      
       const dates = [...new Set(historyData.map(d => d.Date))].sort();
       const latestDate = dates[dates.length - 1];
       
@@ -838,55 +954,46 @@ def generate_dashboard(
                                      .sort((a, b) => a.Rank - b.Rank)
                                      .map(d => d.Industry);
                                      
-      const top10 = latestRanks.slice(0, 10);
+      const topN = latestRanks.slice(0, count);
       
-      const colors = [
-          '#00e676', '#ff4081', '#29b6f6', '#ffee58', '#ab47bc',
-          '#ff7043', '#26a69a', '#ec407a', '#7e57c2', '#9ccc65'
-      ];
-      
-      const datasets = top10.map((ind, i) => {{
+      const datasets = topN.map((ind, i) => {{
           const indData = dates.map(date => {{
               const row = historyData.find(d => d.Date === date && d.Industry === ind);
               return row ? row.Median_RS : null;
           }});
           
           return {{
-              label: ind,
+              label: shortName(ind),
               data: indData,
-              borderColor: colors[i % colors.length],
+              borderColor: chartColors[i % chartColors.length],
               backgroundColor: 'transparent',
               borderWidth: 2,
-              pointRadius: 3,
-              tension: 0.1
+              pointRadius: 2,
+              pointHoverRadius: 5,
+              tension: 0.2
           }};
       }});
       
-      new Chart(document.getElementById('industryChart'), {{
+      // Destroy old chart if exists
+      if (industryChartInstance) {{
+          industryChartInstance.destroy();
+      }}
+      
+      industryChartInstance = new Chart(document.getElementById('industryChart'), {{
           type: 'line',
           data: {{
               labels: dates,
               datasets: datasets
           }},
-          options: {{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {{
-                  legend: {{
-                      position: 'right',
-                      labels: {{ color: '#8b9bb4', font: {{ family: "'JetBrains Mono', monospace", size: 10 }} }}
-                  }}
-              }},
-              scales: {{
-                  x: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }},
-                  y: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }}
-              }}
-          }}
+          options: getChartOptions('Median RS Percentile')
       }});
   }}
   
+  // Build industry chart on load
+  rebuildIndustryChart();
+  
+  // ── Sector Chart ──
   if (sectorHistoryData && sectorHistoryData.length > 0) {{
-      // Group by Sector
       const dates = [...new Set(sectorHistoryData.map(d => d.Date))].sort();
       const latestDate = dates[dates.length - 1];
       
@@ -894,12 +1001,7 @@ def generate_dashboard(
                                      .sort((a, b) => a.Rank - b.Rank)
                                      .map(d => d.Sector);
                                      
-      const topSectors = latestRanks.slice(0, 10);
-      
-      const colors = [
-          '#00e676', '#ff4081', '#29b6f6', '#ffee58', '#ab47bc',
-          '#ff7043', '#26a69a', '#ec407a', '#7e57c2', '#9ccc65'
-      ];
+      const topSectors = latestRanks;
       
       const datasets = topSectors.map((sec, i) => {{
           const secData = dates.map(date => {{
@@ -908,13 +1010,14 @@ def generate_dashboard(
           }});
           
           return {{
-              label: sec,
+              label: shortName(sec),
               data: secData,
-              borderColor: colors[i % colors.length],
+              borderColor: chartColors[i % chartColors.length],
               backgroundColor: 'transparent',
               borderWidth: 2,
-              pointRadius: 3,
-              tension: 0.1
+              pointRadius: 2,
+              pointHoverRadius: 5,
+              tension: 0.2
           }};
       }});
       
@@ -924,20 +1027,7 @@ def generate_dashboard(
               labels: dates,
               datasets: datasets
           }},
-          options: {{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {{
-                  legend: {{
-                      position: 'right',
-                      labels: {{ color: '#8b9bb4', font: {{ family: "'JetBrains Mono', monospace", size: 10 }} }}
-                  }}
-              }},
-              scales: {{
-                  x: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }},
-                  y: {{ grid: {{ color: 'rgba(255,255,255,0.05)' }}, ticks: {{ color: '#8b9bb4' }} }}
-              }}
-          }}
+          options: getChartOptions('Composite RS Spread (%)')
       }});
   }}
 </script>
