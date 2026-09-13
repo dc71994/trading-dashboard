@@ -326,27 +326,27 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     return filtered[existing_cols]
 
 def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks with strict VCP basing rules (Prior run >30%, duration >40 days, Base DD <25%)."""
+    """Finds stocks consolidating in constructive bases (Drawdown <=28%, Days 25-150, Prior run/momentum >=25%)."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
     merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
     
-    # Needs to be a valid stock that has the VCP columns
     if 'Days_Since_Peak' not in merged.columns:
         return pd.DataFrame()
         
-    base_cond = (merged['Days_Since_Peak'] >= 40)
-    dd_cond = (merged['Max_Base_DD'] >= -25.0) & (merged['Pct_From_High'] >= -25.0)
-    prior_leg_cond = (merged['Prior_Leg_Gain'] >= 30.0)
+    base_cond = (merged['Days_Since_Peak'] >= 25) & (merged['Days_Since_Peak'] <= 150)
+    dd_cond = (merged['Max_Base_DD'] >= -28.0) & (merged['Pct_From_High'] >= -25.0)
+    prior_leg_cond = (merged['Prior_Leg_Gain'] >= 25.0) | (merged['Return_3M'] >= 25.0) | (merged['Return_6M'] >= 30.0)
     
     filtered = merged[base_cond & dd_cond & prior_leg_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     return filtered
 
+
 def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks resting on MA clusters (launch pad) with strict VCP basing context."""
+    """Finds stocks resting on tight MA clusters with 10 EMA above 20 EMA near 50 SMA in an expanding base (no volume dry-up requirement)."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
@@ -355,38 +355,36 @@ def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd
     if 'Days_Since_Peak' not in merged.columns:
         return pd.DataFrame()
     
-    # Must meet core VCP criteria first (slightly looser for launchpad, e.g. duration >20)
-    base_cond = (merged['Days_Since_Peak'] >= 20)
-    dd_cond = (merged['Max_Base_DD'] >= -25.0) & (merged['Pct_From_High'] >= -25.0)
-    prior_leg_cond = (merged['Prior_Leg_Gain'] >= 30.0)
-    
     # Valid MAs
     valid_ma = merged[['EMA_10', 'EMA_20', 'SMA_50', 'SMA_200']].notna().all(axis=1)
-    df = merged[base_cond & dd_cond & prior_leg_cond & valid_ma].copy()
-    
-    if df.empty: return df
-    
-    # Calculate MA cluster min and max (tightness)
+    df = merged[valid_ma].copy()
+    if df.empty:
+        return df
+
+    # 1. 10 EMA above 20 EMA
+    ema_cond = df['EMA_10'] >= df['EMA_20']
+
+    # 2. Tightness with 50 SMA (MA cluster within 8%)
     df['MA_Max'] = df[['EMA_10', 'EMA_20', 'SMA_50']].max(axis=1)
     df['MA_Min'] = df[['EMA_10', 'EMA_20', 'SMA_50']].min(axis=1)
-    
-    # Bunching condition: Max MA is within 5% of Min MA
-    bunching_cond = (df['MA_Max'] / df['MA_Min'] - 1) <= 0.05
-    
-    # Price resting on the pad
-    price_cond = (df['Current_Price'] <= df['MA_Max'] * 1.05) & (df['Current_Price'] >= df['MA_Min'] * 0.98)
-    
-    # Uptrend condition
-    trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'])
-    
-    # Require volume contraction
-    vol_cond = df['Vol_Dry_Up'] == True
-    
-    filtered = df[bunching_cond & price_cond & trend_cond & vol_cond].copy()
-    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
-    
-    # Clean up temp columns
-    filtered = filtered.drop(columns=['MA_Max', 'MA_Min'])
-    
-    return filtered
+    bunching_cond = (df['MA_Max'] / df['MA_Min'] - 1) <= 0.08
 
+    # 3. Price near the MA cluster
+    price_cond = (df['Current_Price'] >= df['MA_Min'] * 0.96) & (df['Current_Price'] <= df['MA_Max'] * 1.08)
+
+    # 4. Long-term trend: Current Price above 200 SMA
+    trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'] * 0.95)
+
+    # 5. Base context (allow slightly bigger base: 15 to 150 trading days, max base DD <= 28%, current within 25% of high)
+    base_days = (df['Days_Since_Peak'] >= 15) & (df['Days_Since_Peak'] <= 150)
+    dd_cond = (df['Max_Base_DD'] >= -28.0) & (df['Pct_From_High'] >= -25.0)
+
+    # 6. Prior trend / momentum
+    prior_cond = (df['Prior_Leg_Gain'] >= 25.0) | (df['Return_3M'] >= 25.0) | (df['Return_6M'] >= 25.0)
+
+    # Note: Volume Dry-Up condition completely removed
+    filtered = df[ema_cond & bunching_cond & price_cond & trend_cond & base_days & dd_cond & prior_cond].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
+
+    filtered = filtered.drop(columns=['MA_Max', 'MA_Min'])
+    return filtered
