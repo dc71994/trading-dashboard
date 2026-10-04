@@ -1,0 +1,21 @@
+Rank,Industry,Sector,Median_RS,Mean_RS,Pct_Above_70,Pct_Near_High,Stock_Count,Top_Stock,Top_Stock_RS,Industry_Rank_Score
+1,Electronics Distributors,Distribution Services,94.5,93.75,100.0,75.0,4,OPTIEMUS.NS,97,92.25
+2,Electronic Components,Electronic Technology,91.0,69.25,75.0,50.0,4,AIMTRON.NS,95,78.0
+3,Oilfield Services/Equipment,Industrial Services,89.0,76.66666666666667,66.66666666666666,33.33333333333333,3,DEEPINDS.NS,90,71.16666666666667
+4,Biotechnology,Health Technology,87.0,81.0,66.66666666666666,33.33333333333333,3,RUBICON.NS,91,70.16666666666667
+5,Medical Specialties,Health Technology,79.0,76.0,66.66666666666666,33.33333333333333,3,SETL.NS,98,66.16666666666667
+6,Metal Fabrication,Producer Manufacturing,73.0,67.21739130434783,56.52173913043478,34.78260869565217,23,MENONBE.NS,97,60.413043478260875
+7,Wholesale Distributors,Distribution Services,70.0,58.0,53.333333333333336,46.666666666666664,15,PRIZOR.NS,97,60.333333333333336
+8,Containers/Packaging,Process Industries,75.5,64.91666666666667,50.0,16.666666666666664,12,UFLEX.NS,92,56.083333333333336
+9,Internet Retail,Retail Trade,71.5,58.5,50.0,25.0,4,MSTCLTD.NS,83,55.75
+10,Food: Meat/Fish/Dairy,Consumer Non-Durables,71.5,56.0,66.66666666666666,0.0,6,KWIL.NS,81,55.75
+11,Pharmaceuticals: Major,Health Technology,69.0,63.66233766233766,48.05194805194805,31.16883116883117,77,MOREPENLAB.NS,99,55.14935064935065
+12,Textiles,Process Industries,68.0,59.074074074074076,48.148148148148145,29.629629629629626,27,RAYMOND.NS,99,54.37037037037037
+13,Specialty Stores,Retail Trade,68.5,66.9,50.0,20.0,10,DPABHUSHAN.NS,96,53.25
+14,Auto Parts: OEM,Producer Manufacturing,67.5,61.56,48.0,24.0,50,WHEELS.NS,96,52.95
+15,Electronic Production Equipment,Electronic Technology,71.5,69.2,50.0,10.0,10,CYIENTDLM.NS,98,52.75
+16,Aerospace & Defense,Electronic Technology,70.5,59.5,50.0,12.5,8,AEQUS.NS,94,52.75
+17,Trucks/Construction/Farm Machinery,Producer Manufacturing,67.5,54.75,45.0,25.0,20,KMEW.NS,89,52.25
+18,Chemicals: Specialty,Process Industries,66.0,59.62264150943396,47.16981132075472,22.641509433962266,53,BHAGERIA.NS,98,51.67924528301887
+19,Electrical Products,Producer Manufacturing,64.5,59.22,48.0,22.0,50,BIRLACABLE.NS,98,51.05
+20,Electronic Equipment/Instruments,Electronic Technology,59.0,58.8,40.0,40.0,5,SPECTRUM.NS,98,49.5
