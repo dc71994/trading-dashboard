@@ -1,0 +1,21 @@
+Rank,Industry,Sector,Median_RS,Mean_RS,Pct_Above_70,Pct_Near_High,Stock_Count,Top_Stock,Top_Stock_RS,Industry_Rank_Score
+1,Electronics Distributors,Distribution Services,93.0,93.25,100.0,25.0,4,OPTIEMUS.NS,95,81.5
+2,Oilfield Services/Equipment,Industrial Services,92.0,83.0,66.66666666666666,33.33333333333333,3,DOLPHIN.NS,94,72.66666666666667
+3,Internet Retail,Retail Trade,75.5,59.5,75.0,25.0,4,MANYAVAR.NS,78,65.25
+4,Electronic Components,Electronic Technology,82.0,64.0,75.0,0.0,4,AIMTRON.NS,92,63.5
+5,Textiles,Process Industries,75.5,62.42307692307692,61.53846153846154,30.76923076923077,26,RAYMOND.NS,98,62.36538461538461
+6,Biotechnology,Health Technology,74.0,73.0,66.66666666666666,0.0,3,RUBICON.NS,86,57.0
+7,Food: Meat/Fish/Dairy,Consumer Non-Durables,73.5,59.0,66.66666666666666,0.0,6,KWIL.NS,84,56.75
+8,Electronic Production Equipment,Electronic Technology,74.0,66.3,50.0,20.0,10,CYIENTDLM.NS,98,56.0
+9,Chemicals: Specialty,Process Industries,72.0,60.22641509433962,54.71698113207547,16.9811320754717,53,BHAGERIA.NS,97,55.81132075471698
+10,Medical Specialties,Health Technology,71.0,71.33333333333333,66.66666666666666,0.0,3,SETL.NS,96,55.5
+11,Internet Software/Services,Technology Services,69.0,51.09090909090909,45.45454545454545,36.36363636363637,11,CARTRADE.NS,88,55.40909090909091
+12,Aerospace & Defense,Electronic Technology,75.0,64.0,50.0,12.5,8,AEQUS.NS,89,55.0
+13,Containers/Packaging,Process Industries,74.0,66.08333333333333,58.333333333333336,0.0,12,NRAIL.NS,94,54.5
+14,Specialty Stores,Retail Trade,70.5,68.4,50.0,20.0,10,DPABHUSHAN.NS,98,54.25
+15,Movies/Entertainment,Consumer Services,61.5,60.75,50.0,37.5,8,PVRINOX.NS,89,53.25
+16,Metal Fabrication,Producer Manufacturing,69.0,63.47826086956522,47.82608695652174,17.391304347826086,23,MENONBE.NS,95,52.32608695652174
+17,Electronics/Appliances,Consumer Durables,62.5,59.25,37.5,37.5,8,CPPLUS.NS,93,50.0
+18,Other Consumer Specialties,Consumer Durables,54.0,61.23529411764706,47.05882352941176,41.17647058823529,17,TBZ.NS,99,49.35294117647059
+19,Pharmaceuticals: Major,Health Technology,63.5,60.108108108108105,40.54054054054054,14.864864864864865,74,MOREPENLAB.NS,99,46.88513513513514
+20,Auto Parts: OEM,Producer Manufacturing,62.5,56.74,40.0,18.0,50,WHEELS.NS,97,46.85
