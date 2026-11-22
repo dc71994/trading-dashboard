@@ -37,7 +37,9 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             
         current_price = df['Close'].iloc[-1]
         high_52w = df['High'].max()
+        low_52w = df['Low'].min()
         pct_from_high = ((current_price / high_52w) - 1) * 100 if high_52w > 0 else 0
+        pct_from_low = ((current_price / low_52w) - 1) * 100 if low_52w > 0 else 0
         avg_volume = df['Volume'].mean()
         
         # Helper to compute returns
@@ -72,10 +74,17 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         ema_20 = close_series.ewm(span=20, adjust=False).mean().iloc[-1] if len(close_series) >= 20 else None
         # 50 SMA
         sma_50 = close_series.rolling(window=50).mean().iloc[-1] if len(close_series) >= 50 else None
+        # 50 SMA 10 days ago (for slope)
+        sma_50_past = close_series.rolling(window=50).mean().iloc[-11] if len(close_series) >= 61 else None
+        sma_50_rising = (sma_50 >= sma_50_past) if (sma_50 is not None and sma_50_past is not None) else False
+
         # 100 SMA
         sma_100 = close_series.rolling(window=100).mean().iloc[-1] if len(close_series) >= 100 else None
         # 200 SMA
         sma_200 = close_series.rolling(window=200).mean().iloc[-1] if len(close_series) >= 200 else None
+        # 200 SMA 20 days ago (for slope)
+        sma_200_past = close_series.rolling(window=200).mean().iloc[-21] if len(close_series) >= 221 else None
+        sma_200_rising = (sma_200 >= sma_200_past) if (sma_200 is not None and sma_200_past is not None) else False
         
         # Check 10 SMA Reclaim in the last 5 days:
         # Currently above 10 SMA, but was below (or equal to) 10 SMA at least once in the last 5 bars
@@ -95,13 +104,14 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         prior_leg_gain = 0.0
         vol_dry_up = False
         
+        base_low_price = current_price
         if len(df) > 80:
             peak_idx = int(df['High'].argmax())
             days_since_peak = len(df) - 1 - peak_idx
             
             if days_since_peak > 0:
-                base_low = df['Low'].iloc[peak_idx:].min()
-                max_base_dd = ((base_low / high_52w) - 1) * 100 if high_52w > 0 else 0
+                base_low_price = df['Low'].iloc[peak_idx:].min()
+                max_base_dd = ((base_low_price / high_52w) - 1) * 100 if high_52w > 0 else 0
             else:
                 max_base_dd = 0
                 
@@ -120,7 +130,9 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Ticker': ticker,
             'Current_Price': current_price,
             'High_52W': high_52w,
+            'Low_52W': low_52w,
             'Pct_From_High': pct_from_high,
+            'Pct_From_Low': pct_from_low,
             'Avg_Volume': avg_volume,
             'Return_1W': r_1w * 100,
             'Return_1M': r_1m * 100,
@@ -133,6 +145,9 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'SMA_50': sma_50,
             'SMA_100': sma_100,
             'SMA_200': sma_200,
+            'SMA_50_Rising': sma_50_rising,
+            'SMA_200_Rising': sma_200_rising,
+            'Base_Low_Price': base_low_price,
             'Reclaimed_10_SMA': reclaimed_10_sma,
             'Days_Since_Peak': days_since_peak,
             'Max_Base_DD': max_base_dd,
@@ -145,10 +160,10 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
     
     if res_df.empty:
         return pd.DataFrame(columns=[
-            'Ticker', 'Current_Price', 'High_52W', 'Pct_From_High', 'Avg_Volume',
+            'Ticker', 'Current_Price', 'High_52W', 'Low_52W', 'Pct_From_High', 'Pct_From_Low', 'Avg_Volume',
             'Return_1W', 'Return_1M', 'Return_3M', 'Return_6M',
             'RS_Composite', 'RS_Percentile',
-            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
+            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'SMA_50_Rising', 'SMA_200_Rising', 'Base_Low_Price', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
         ])
         
     # Rank and calculate percentile (0-99)
@@ -342,7 +357,7 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     return filtered[existing_cols]
 
 def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks consolidating in constructive bases (Drawdown <=35%, Days 25-150, Prior run/momentum >=25%)."""
+    """Finds stocks consolidating in constructive Stage 2 bases."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
@@ -351,11 +366,33 @@ def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.Dat
     if 'Days_Since_Peak' not in merged.columns:
         return pd.DataFrame()
         
-    base_cond = (merged['Days_Since_Peak'] >= 25) & (merged['Days_Since_Peak'] <= 150)
-    dd_cond = (merged['Max_Base_DD'] >= -35.0) & (merged['Pct_From_High'] >= -35.0)
-    prior_leg_cond = (merged['Prior_Leg_Gain'] >= 25.0) | (merged['Return_3M'] >= 25.0) | (merged['Return_6M'] >= 30.0)
+    # Valid MAs check
+    valid_ma = merged[['SMA_50', 'SMA_200']].notna().all(axis=1)
+    df = merged[valid_ma].copy()
+    if df.empty:
+        return df
+
+    # Stage 2 Trend Template:
+    # 1. Moving Average Alignment: Current Price > 50 SMA > 200 SMA
+    ma_align = (df['Current_Price'] > df['SMA_50']) & (df['SMA_50'] > df['SMA_200'])
     
-    filtered = merged[base_cond & dd_cond & prior_leg_cond].copy()
+    # 2. Upward Trend Slopes: 200 SMA and 50 SMA rising
+    rising_ma = (df['SMA_200_Rising'] == True) & (df['SMA_50_Rising'] == True)
+    
+    # 3. Base support: Base low must not violate deeply below the 200 SMA (support respected)
+    base_floor = df['Base_Low_Price'] >= (df['SMA_200'] * 0.95)
+    
+    # 4. Above 52W low by at least 25%
+    low_clearance = df['Pct_From_Low'] >= 25.0
+    
+    # 5. Base context: 25-150 days consolidation, max drawdown <= 35%, within 35% of 52W high
+    base_cond = (df['Days_Since_Peak'] >= 25) & (df['Days_Since_Peak'] <= 150)
+    dd_cond = (df['Max_Base_DD'] >= -35.0) & (df['Pct_From_High'] >= -35.0)
+    
+    # 6. Prior momentum
+    prior_leg_cond = (df['Prior_Leg_Gain'] >= 25.0) | (df['Return_3M'] >= 25.0) | (df['Return_6M'] >= 25.0)
+    
+    filtered = df[ma_align & rising_ma & base_floor & low_clearance & base_cond & dd_cond & prior_leg_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     return filtered
@@ -363,7 +400,7 @@ def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.Dat
 
 def find_reclaimed_10_sma_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
     """
-    Finds stocks in a strong uptrend that consolidated for >=15 bars and reclaimed their 10-day SMA in the last 5 days.
+    Finds Stage 2 stocks that consolidated for >=15 bars and reclaimed their 10-day SMA in the last 5 days.
     """
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
@@ -382,22 +419,30 @@ def find_reclaimed_10_sma_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame)
     # 1. Reclaimed 10 SMA in the last 5 days
     reclaim_cond = df['Reclaimed_10_SMA'] == True
     
-    # 2. Strong uptrend definition (same as launch pad & basing)
-    trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'] * 0.95)
+    # 2. Stage 2 Trend Template:
+    # Current Price > 50 SMA > 200 SMA
+    ma_align = (df['Current_Price'] > df['SMA_50']) & (df['SMA_50'] > df['SMA_200'])
+    # 200 SMA rising
+    rising_ma = df['SMA_200_Rising'] == True
+    # Base low respecting 200 SMA
+    base_floor = df['Base_Low_Price'] >= (df['SMA_200'] * 0.95)
+    # Above 52W low by >= 25%
+    low_clearance = df['Pct_From_Low'] >= 25.0
+    # Prior uptrend / momentum
     prior_cond = (df['Prior_Leg_Gain'] >= 25.0) | (df['Return_3M'] >= 25.0) | (df['Return_6M'] >= 25.0)
     
-    # 3. At least 15 bars consolidation & max depth up to 35%
+    # 3. Consolidation: >= 15 bars, max depth up to 35%
     base_cond = (df['Days_Since_Peak'] >= 15) & (df['Days_Since_Peak'] <= 150)
     dd_cond = (df['Max_Base_DD'] >= -35.0) & (df['Pct_From_High'] >= -35.0)
     
-    filtered = df[reclaim_cond & trend_cond & prior_cond & base_cond & dd_cond].copy()
+    filtered = df[reclaim_cond & ma_align & rising_ma & base_floor & low_clearance & prior_cond & base_cond & dd_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     return filtered
 
 
 def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks resting on tight MA clusters with 10 EMA above 20 EMA near 50 SMA in an expanding base (no volume dry-up requirement)."""
+    """Finds Stage 2 stocks resting on tight MA clusters with 10 EMA above 20 EMA near 50 SMA."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
@@ -423,18 +468,24 @@ def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd
     # 3. Price near the MA cluster
     price_cond = (df['Current_Price'] >= df['MA_Min'] * 0.96) & (df['Current_Price'] <= df['MA_Max'] * 1.08)
 
-    # 4. Long-term trend: Current Price above 200 SMA
-    trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'] * 0.95)
+    # 4. Stage 2 Trend Template:
+    # 50 SMA > 200 SMA and Price > 200 SMA
+    ma_align = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'])
+    # 200 SMA rising
+    rising_ma = df['SMA_200_Rising'] == True
+    # Base low respecting 200 SMA
+    base_floor = df['Base_Low_Price'] >= (df['SMA_200'] * 0.95)
+    # Above 52W low by >= 25%
+    low_clearance = df['Pct_From_Low'] >= 25.0
 
-    # 5. Base context (allow slightly bigger base: 15 to 150 trading days, max base DD <= 28%, current within 25% of high)
+    # 5. Base context
     base_days = (df['Days_Since_Peak'] >= 15) & (df['Days_Since_Peak'] <= 150)
-    dd_cond = (df['Max_Base_DD'] >= -28.0) & (df['Pct_From_High'] >= -25.0)
+    dd_cond = (df['Max_Base_DD'] >= -30.0) & (df['Pct_From_High'] >= -25.0)
 
     # 6. Prior trend / momentum
     prior_cond = (df['Prior_Leg_Gain'] >= 25.0) | (df['Return_3M'] >= 25.0) | (df['Return_6M'] >= 25.0)
 
-    # Note: Volume Dry-Up condition completely removed
-    filtered = df[ema_cond & bunching_cond & price_cond & trend_cond & base_days & dd_cond & prior_cond].copy()
+    filtered = df[ema_cond & bunching_cond & price_cond & ma_align & rising_ma & base_floor & low_clearance & base_days & dd_cond & prior_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
 
     filtered = filtered.drop(columns=['MA_Max', 'MA_Min'])
