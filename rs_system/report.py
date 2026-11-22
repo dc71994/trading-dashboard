@@ -618,6 +618,23 @@ def generate_dashboard(
     gap: 16px;
     margin-top: 16px;
   }}
+  .chart-grid.cols-2 {{
+    grid-template-columns: repeat(2, 1fr);
+  }}
+  .chart-grid.cols-2 .chart-card-canvas {{
+    height: 360px;
+  }}
+  .chart-grid.cols-3 {{
+    grid-template-columns: repeat(3, 1fr);
+  }}
+  .chart-grid.cols-3 .chart-card-canvas {{
+    height: 270px;
+  }}
+  @media (max-width: 900px) {{
+    .chart-grid.cols-2, .chart-grid.cols-3 {{
+      grid-template-columns: 1fr;
+    }}
+  }}
   .chart-card {{
     background: var(--surface);
     border: 1px solid var(--border);
@@ -898,6 +915,10 @@ def generate_dashboard(
             <button class="view-switch-btn active" onclick="switchView('basing', 'table')" id="btn-view-basing-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('basing', 'grid')" id="btn-view-basing-grid">⊞ Chart Grid</button>
           </div>
+          <div class="view-switch col-switch" id="col-switch-basing" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-basing">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-basing">3 View</button>
+          </div>
           <select id="grid-ma-filter-basing" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
             <option value="10-50">MAs: 10 EMA + 50 SMA</option>
             <option value="10-20-50">MAs: 10 + 20 + 50</option>
@@ -952,6 +973,10 @@ def generate_dashboard(
           <div class="view-switch" style="margin-left:12px;">
             <button class="view-switch-btn active" onclick="switchView('launchpad', 'table')" id="btn-view-launchpad-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('launchpad', 'grid')" id="btn-view-launchpad-grid">⊞ Chart Grid</button>
+          </div>
+          <div class="view-switch col-switch" id="col-switch-launchpad" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-launchpad">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-launchpad">3 View</button>
           </div>
           <select id="grid-ma-filter-launchpad" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
             <option value="10-50">MAs: 10 EMA + 50 SMA</option>
@@ -1015,6 +1040,10 @@ def generate_dashboard(
             <button class="view-switch-btn active" onclick="switchView('reclaim10', 'table')" id="btn-view-reclaim10-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('reclaim10', 'grid')" id="btn-view-reclaim10-grid">⊞ Chart Grid</button>
           </div>
+          <div class="view-switch col-switch" id="col-switch-reclaim10" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-reclaim10">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-reclaim10">3 View</button>
+          </div>
           <select id="grid-ma-filter-reclaim10" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
             <option value="10-50">MAs: 10 EMA + 50 SMA</option>
             <option value="10-20-50">MAs: 10 + 20 + 50</option>
@@ -1077,6 +1106,10 @@ def generate_dashboard(
           <div class="view-switch" style="margin-left:12px;">
             <button class="view-switch-btn active" onclick="switchView('iporeclaim10', 'table')" id="btn-view-iporeclaim10-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('iporeclaim10', 'grid')" id="btn-view-iporeclaim10-grid">⊞ Chart Grid</button>
+          </div>
+          <div class="view-switch col-switch" id="col-switch-iporeclaim10" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-iporeclaim10">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-iporeclaim10">3 View</button>
           </div>
           <select id="grid-ma-filter-iporeclaim10" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
             <option value="10-50">MAs: 10 EMA + 50 SMA</option>
@@ -1513,25 +1546,86 @@ def generate_dashboard(
   const chartsCreated = {{}};
   let currentMAMode = '10-50';
   let currentBarsCount = 120;
+  let currentGridCols = 3;
 
   function switchView(tabKey, mode) {{
     const tblWrap = document.getElementById(`view-table-${{tabKey}}`);
     const gridWrap = document.getElementById(`view-grid-${{tabKey}}`);
     const btnTable = document.getElementById(`btn-view-${{tabKey}}-table`);
     const btnGrid = document.getElementById(`btn-view-${{tabKey}}-grid`);
+    const colSwitch = document.getElementById(`col-switch-${{tabKey}}`);
 
     if (mode === 'grid') {{
       tblWrap.style.display = 'none';
       gridWrap.style.display = 'grid';
       btnTable.classList.remove('active');
       btnGrid.classList.add('active');
+      if (colSwitch) colSwitch.style.display = 'inline-flex';
       renderGridCharts(tabKey);
+      setTimeout(() => resizeTabCharts(tabKey), 20);
     }} else {{
       tblWrap.style.display = 'block';
       gridWrap.style.display = 'none';
       btnTable.classList.add('active');
       btnGrid.classList.remove('active');
+      if (colSwitch) colSwitch.style.display = 'none';
     }}
+  }}
+
+  function updateGlobalCols(cols) {{
+    currentGridCols = cols;
+    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10'].forEach(k => {{
+      const grid = document.getElementById(`view-grid-${{k}}`);
+      if (grid) {{
+        if (cols === 2) {{
+          grid.classList.add('cols-2');
+          grid.classList.remove('cols-3');
+        }} else {{
+          grid.classList.add('cols-3');
+          grid.classList.remove('cols-2');
+        }}
+      }}
+      const b2 = document.getElementById(`btn-col-2-${{k}}`);
+      const b3 = document.getElementById(`btn-col-3-${{k}}`);
+      if (b2 && b3) {{
+        if (cols === 2) {{
+          b2.classList.add('active');
+          b3.classList.remove('active');
+        }} else {{
+          b3.classList.add('active');
+          b2.classList.remove('active');
+        }}
+      }}
+    }});
+
+    // Resize all existing charts to fit their new container width and height
+    setTimeout(() => {{
+      Object.keys(chartsCreated).forEach(canvasId => {{
+        const cObj = chartsCreated[canvasId];
+        const container = document.getElementById(canvasId);
+        if (cObj && container) {{
+          const targetHeight = cols === 2 ? 360 : 270;
+          cObj.chart.resize(container.clientWidth || (cols === 2 ? 650 : 420), targetHeight);
+          cObj.chart.timeScale().fitContent();
+        }}
+      }});
+    }}, 40);
+  }}
+
+  function resizeTabCharts(tabKey) {{
+    const gridWrap = document.getElementById(`view-grid-${{tabKey}}`);
+    if (!gridWrap) return;
+    const cards = gridWrap.querySelectorAll('.chart-card');
+    cards.forEach(card => {{
+      const ticker = card.getAttribute('data-ticker');
+      const canvasId = `chart-${{tabKey}}-${{ticker}}`;
+      const cObj = chartsCreated[canvasId];
+      const container = document.getElementById(canvasId);
+      if (cObj && container) {{
+        const targetHeight = currentGridCols === 2 ? 360 : 270;
+        cObj.chart.resize(container.clientWidth, targetHeight);
+      }}
+    }});
   }}
 
   function updateGlobalMA(val) {{
@@ -1594,9 +1688,10 @@ def generate_dashboard(
       }}
 
       try {{
+        const targetHeight = currentGridCols === 2 ? 360 : 270;
         const chart = LightweightCharts.createChart(container, {{
-          width: container.clientWidth || 400,
-          height: 270,
+          width: container.clientWidth || (currentGridCols === 2 ? 650 : 400),
+          height: targetHeight,
           layout: {{
             background: {{ color: '#0e0e17' }},
             textColor: '#8e8ea0',
