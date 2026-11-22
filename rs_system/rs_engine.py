@@ -64,6 +64,8 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         # Moving Averages calculations
         close_series = df['Close'].dropna()
         
+        # 10 SMA
+        sma_10 = close_series.rolling(window=10).mean().iloc[-1] if len(close_series) >= 10 else None
         # 10 EMA
         ema_10 = close_series.ewm(span=10, adjust=False).mean().iloc[-1] if len(close_series) >= 10 else None
         # 20 EMA
@@ -75,6 +77,18 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         # 200 SMA
         sma_200 = close_series.rolling(window=200).mean().iloc[-1] if len(close_series) >= 200 else None
         
+        # Check 10 SMA Reclaim in the last 5 days:
+        # Currently above 10 SMA, but was below (or equal to) 10 SMA at least once in the last 5 bars
+        reclaimed_10_sma = False
+        if len(close_series) >= 15:
+            sma_10_series = close_series.rolling(window=10).mean()
+            last_5_close = close_series.iloc[-5:]
+            last_5_sma10 = sma_10_series.iloc[-5:]
+            if current_price > sma_10_series.iloc[-1]:
+                # was below or touched SMA 10 in the last 5 days
+                if (last_5_close <= last_5_sma10).any():
+                    reclaimed_10_sma = True
+
         # --- VCP / Basing specific metrics ---
         days_since_peak = 0
         max_base_dd = 0.0
@@ -113,11 +127,13 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Return_3M': r_3m * 100,
             'Return_6M': r_6m * 100,
             'RS_Composite': rs_composite,
+            'SMA_10': sma_10,
             'EMA_10': ema_10,
             'EMA_20': ema_20,
             'SMA_50': sma_50,
             'SMA_100': sma_100,
             'SMA_200': sma_200,
+            'Reclaimed_10_SMA': reclaimed_10_sma,
             'Days_Since_Peak': days_since_peak,
             'Max_Base_DD': max_base_dd,
             'Prior_Leg_Gain': prior_leg_gain,
@@ -132,7 +148,7 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Ticker', 'Current_Price', 'High_52W', 'Pct_From_High', 'Avg_Volume',
             'Return_1W', 'Return_1M', 'Return_3M', 'Return_6M',
             'RS_Composite', 'RS_Percentile',
-            'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
+            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
         ])
         
     # Rank and calculate percentile (0-99)
@@ -326,7 +342,7 @@ def find_leaders_in_leading_groups(stock_rs: pd.DataFrame, industry_rs: pd.DataF
     return filtered[existing_cols]
 
 def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
-    """Finds stocks consolidating in constructive bases (Drawdown <=28%, Days 25-150, Prior run/momentum >=25%)."""
+    """Finds stocks consolidating in constructive bases (Drawdown <=35%, Days 25-150, Prior run/momentum >=25%)."""
     if stock_rs.empty or universe.empty:
         return pd.DataFrame()
         
@@ -336,10 +352,45 @@ def find_basing_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.Dat
         return pd.DataFrame()
         
     base_cond = (merged['Days_Since_Peak'] >= 25) & (merged['Days_Since_Peak'] <= 150)
-    dd_cond = (merged['Max_Base_DD'] >= -28.0) & (merged['Pct_From_High'] >= -25.0)
+    dd_cond = (merged['Max_Base_DD'] >= -35.0) & (merged['Pct_From_High'] >= -35.0)
     prior_leg_cond = (merged['Prior_Leg_Gain'] >= 25.0) | (merged['Return_3M'] >= 25.0) | (merged['Return_6M'] >= 30.0)
     
     filtered = merged[base_cond & dd_cond & prior_leg_cond].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
+    
+    return filtered
+
+
+def find_reclaimed_10_sma_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds stocks in a strong uptrend that consolidated for >=15 bars and reclaimed their 10-day SMA in the last 5 days.
+    """
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    
+    if 'Reclaimed_10_SMA' not in merged.columns or 'Days_Since_Peak' not in merged.columns:
+        return pd.DataFrame()
+        
+    # Valid MAs check
+    valid_ma = merged[['SMA_10', 'SMA_50', 'SMA_200']].notna().all(axis=1)
+    df = merged[valid_ma].copy()
+    if df.empty:
+        return df
+
+    # 1. Reclaimed 10 SMA in the last 5 days
+    reclaim_cond = df['Reclaimed_10_SMA'] == True
+    
+    # 2. Strong uptrend definition (same as launch pad & basing)
+    trend_cond = (df['Current_Price'] > df['SMA_200']) & (df['SMA_50'] > df['SMA_200'] * 0.95)
+    prior_cond = (df['Prior_Leg_Gain'] >= 25.0) | (df['Return_3M'] >= 25.0) | (df['Return_6M'] >= 25.0)
+    
+    # 3. At least 15 bars consolidation & max depth up to 35%
+    base_cond = (df['Days_Since_Peak'] >= 15) & (df['Days_Since_Peak'] <= 150)
+    dd_cond = (df['Max_Base_DD'] >= -35.0) & (df['Pct_From_High'] >= -35.0)
+    
+    filtered = df[reclaim_cond & trend_cond & prior_cond & base_cond & dd_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     return filtered

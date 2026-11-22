@@ -129,6 +129,7 @@ def generate_dashboard(
     sector_history_df: pd.DataFrame = None,
     basing_df: pd.DataFrame = None,
     launch_pad_df: pd.DataFrame = None,
+    reclaimed_10_sma_df: pd.DataFrame = None,
 ) -> str:
     ensure_output_dir()
     date_stamp = get_date_stamp()
@@ -264,6 +265,29 @@ def generate_dashboard(
                 <td>{_format_ma(price, row.get('EMA_10'))}</td>
                 <td>{_format_ma(price, row.get('EMA_20'))}</td>
                 <td>{_format_ma(price, row.get('SMA_50'))}</td>
+                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
+
+    # ── Build 10 SMA Reclaim rows ──
+    reclaimed_10_sma_rows = ""
+    reclaimed_10_sma_count = 0
+    if reclaimed_10_sma_df is not None:
+        reclaimed_10_sma_count = len(reclaimed_10_sma_df)
+        for i, (_, row) in enumerate(reclaimed_10_sma_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            reclaimed_10_sma_rows += f"""
+            <tr data-pct-from-high="{row.get('Pct_From_High', 0):.2f}" data-industry="{row.get('Industry', 'Unknown')}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td>{_format_ma(price, row.get('SMA_10'))}</td>
+                <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+                <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
+                <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
                 <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
                 <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
             </tr>"""
@@ -459,6 +483,7 @@ def generate_dashboard(
     <button class="tab-btn" onclick="showTab('leaders')">// Leaders × Top Groups</button>
     <button class="tab-btn" onclick="showTab('basing')" style="color:var(--accent);">// Basing Setups</button>
     <button class="tab-btn" onclick="showTab('launchpad')" style="color:var(--accent);">// Launch Pads</button>
+    <button class="tab-btn" onclick="showTab('reclaim10')" style="color:var(--accent);">// 10 SMA Reclaim</button>
   </div>
   
   <!-- Tab: Industry Trend -->
@@ -634,10 +659,11 @@ def generate_dashboard(
           <span class="section-num">05</span>
           <span class="section-title">High Momentum Basing ({basing_count})</span>
           <select id="base-depth-filter" onchange="filterBasing()" style="margin-left:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="35">Max 35% Depth</option>
+            <option value="30">Max 30% Depth</option>
             <option value="25">Max 25% Depth</option>
             <option value="20">Max 20% Depth</option>
             <option value="15">Max 15% Depth</option>
-            <option value="10">Max 10% Depth</option>
           </select>
           <span id="basing-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
@@ -699,6 +725,50 @@ def generate_dashboard(
             </tr>
           </thead>
           <tbody>{launch_pad_rows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: 10 SMA Reclaim -->
+  <div id="tab-reclaim10" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num">07</span>
+          <span class="section-title">10-Day SMA Reclaim ({reclaimed_10_sma_count})</span>
+          <select id="reclaim-depth-filter" onchange="filterReclaim()" style="margin-left:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="35">Max 35% Depth</option>
+            <option value="30">Max 30% Depth</option>
+            <option value="25">Max 25% Depth</option>
+            <option value="20">Max 20% Depth</option>
+            <option value="15">Max 15% Depth</option>
+          </select>
+          <span id="reclaim-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-reclaim10')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table id="table-reclaim10">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>10 SMA</th>
+              <th>% From High</th>
+              <th>3M</th>
+              <th>6M</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{reclaimed_10_sma_rows}</tbody>
         </table>
       </div>
     </div>
@@ -772,6 +842,25 @@ def generate_dashboard(
     
     updateInsights('table-basing', 'basing-insights');
   }}
+
+  // ── 10 SMA Reclaim Filter & Insights ──
+  function filterReclaim() {{
+    const maxDepth = parseFloat(document.getElementById('reclaim-depth-filter').value) * -1;
+    const rows = document.querySelectorAll('#table-reclaim10 tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {{
+      const pctFromHigh = parseFloat(row.getAttribute('data-pct-from-high'));
+      if (pctFromHigh >= maxDepth) {{
+        row.style.display = '';
+        visibleCount++;
+      }} else {{
+        row.style.display = 'none';
+      }}
+    }});
+    
+    updateInsights('table-reclaim10', 'reclaim-insights');
+  }}
   
   function updateInsights(tableId, spanId) {{
     const rows = document.querySelectorAll(`#${{tableId}} tbody tr`);
@@ -801,6 +890,7 @@ def generate_dashboard(
   // Run on load
   setTimeout(() => {{
     filterBasing();
+    filterReclaim();
     updateInsights('table-launchpad', 'launchpad-insights');
   }}, 100);
 

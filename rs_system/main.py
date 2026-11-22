@@ -26,6 +26,7 @@ from .rs_engine import (
     find_leaders_in_leading_groups,
     find_basing_stocks,
     find_launch_pad_stocks,
+    find_reclaimed_10_sma_stocks,
 )
 from .report import (
     export_all_stocks,
@@ -198,6 +199,7 @@ def main():
 
     basing = find_basing_stocks(stock_rs, universe)
     launch_pad = find_launch_pad_stocks(stock_rs, universe)
+    reclaimed_10_sma = find_reclaimed_10_sma_stocks(stock_rs, universe)
 
     export_all_stocks(stock_rs)
     export_top_industries(industry_rs)
@@ -207,9 +209,10 @@ def main():
     date_stamp = datetime.now().strftime('%Y-%m-%d')
     basing.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Basing_Setups_{date_stamp}.csv'), index=False)
     launch_pad.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Launch_Pads_{date_stamp}.csv'), index=False)
+    reclaimed_10_sma.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_10_SMA_Reclaims_{date_stamp}.csv'), index=False)
 
     if not args.no_dashboard:
-        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist, sector_history_df=sec_full_hist, basing_df=basing, launch_pad_df=launch_pad)
+        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist, sector_history_df=sec_full_hist, basing_df=basing, launch_pad_df=launch_pad, reclaimed_10_sma_df=reclaimed_10_sma)
         print(f"  → {html_path}")
     else:
         print("  (HTML dashboard skipped)")
