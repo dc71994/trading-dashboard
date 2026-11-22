@@ -215,7 +215,7 @@ def main():
     ipo_reclaimed_10_sma.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_IPO_10_SMA_Reclaims_{date_stamp}.csv'), index=False)
 
     if not args.no_dashboard:
-        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist, sector_history_df=sec_full_hist, basing_df=basing, launch_pad_df=launch_pad, reclaimed_10_sma_df=reclaimed_10_sma, ipo_reclaimed_10_sma_df=ipo_reclaimed_10_sma)
+        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist, sector_history_df=sec_full_hist, basing_df=basing, launch_pad_df=launch_pad, reclaimed_10_sma_df=reclaimed_10_sma, ipo_reclaimed_10_sma_df=ipo_reclaimed_10_sma, prices=prices)
         print(f"  → {html_path}")
     else:
         print("  (HTML dashboard skipped)")

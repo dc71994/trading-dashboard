@@ -131,6 +131,7 @@ def generate_dashboard(
     launch_pad_df: pd.DataFrame = None,
     reclaimed_10_sma_df: pd.DataFrame = None,
     ipo_reclaimed_10_sma_df: pd.DataFrame = None,
+    prices: dict = None,
 ) -> str:
     ensure_output_dir()
     date_stamp = get_date_stamp()
@@ -146,6 +147,56 @@ def generate_dashboard(
     if sector_history_df is not None and not sector_history_df.empty:
         sector_history_df = sector_history_df.sort_values("Date")
         sector_history_json = sector_history_df.to_json(orient="records")
+
+    # ── Stock Candle & MA Data for Grid View ──
+    # Extract last 75 bars for candidates in Basing, Launchpad, and Reclaims
+    candidate_tickers = set()
+    for df_cand in [basing_df, launch_pad_df, reclaimed_10_sma_df, ipo_reclaimed_10_sma_df]:
+        if df_cand is not None and not df_cand.empty and 'Ticker' in df_cand.columns:
+            candidate_tickers.update(df_cand['Ticker'].dropna().tolist())
+
+    candles_data = {}
+    if prices is not None:
+        for t in candidate_tickers:
+            if t in prices and prices[t] is not None and not prices[t].empty:
+                df_p = prices[t].dropna(how='all').copy()
+                if isinstance(df_p.columns, pd.MultiIndex):
+                    df_p.columns = [c[0] for c in df_p.columns]
+                if len(df_p) >= 10:
+                    recent = df_p.tail(75)
+                    close_s = df_p['Close']
+                    ema10_s = close_s.ewm(span=10, adjust=False).mean()
+                    ema20_s = close_s.ewm(span=20, adjust=False).mean()
+                    sma50_s = close_s.rolling(window=50).mean()
+                    sma200_s = close_s.rolling(window=200).mean()
+                    vol50_s = df_p['Volume'].rolling(window=50).mean()
+
+                    bars = []
+                    for idx, row in recent.iterrows():
+                        d_str = idx.strftime('%Y-%m-%d') if hasattr(idx, 'strftime') else str(idx)[:10]
+                        c_val = float(row.get('Close', 0))
+                        o_val = float(row.get('Open', c_val))
+                        h_val = float(row.get('High', max(c_val, o_val)))
+                        l_val = float(row.get('Low', min(c_val, o_val)))
+                        v_val = float(row.get('Volume', 0))
+                        
+                        e10 = float(ema10_s.loc[idx]) if idx in ema10_s and not pd.isna(ema10_s.loc[idx]) else None
+                        e20 = float(ema20_s.loc[idx]) if idx in ema20_s and not pd.isna(ema20_s.loc[idx]) else None
+                        s50 = float(sma50_s.loc[idx]) if idx in sma50_s and not pd.isna(sma50_s.loc[idx]) else None
+                        s200 = float(sma200_s.loc[idx]) if idx in sma200_s and not pd.isna(sma200_s.loc[idx]) else None
+                        v50 = float(vol50_s.loc[idx]) if idx in vol50_s and not pd.isna(vol50_s.loc[idx]) else None
+
+                        bars.append({
+                            'time': d_str, 'open': round(o_val, 2), 'high': round(h_val, 2),
+                            'low': round(l_val, 2), 'close': round(c_val, 2), 'volume': round(v_val, 0),
+                            'ema10': round(e10, 2) if e10 else None,
+                            'ema20': round(e20, 2) if e20 else None,
+                            'sma50': round(s50, 2) if s50 else None,
+                            'sma200': round(s200, 2) if s200 else None,
+                            'vol50': round(v50, 0) if v50 else None,
+                        })
+                    candles_data[t.replace('.NS', '')] = bars
+    candles_json = json.dumps(candles_data)
 
 
     # ── Build sector index heatmap rows ──
@@ -226,96 +277,156 @@ def generate_dashboard(
             <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
         </tr>"""
 
-    # ── Build basing rows ──
+    # ── Build basing rows & cards ──
     basing_rows = ""
+    basing_cards = ""
     basing_count = 0
     if basing_df is not None:
         basing_count = len(basing_df)
         for i, (_, row) in enumerate(basing_df.iterrows()):
             ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
             price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
             basing_rows += f"""
-            <tr data-pct-from-high="{row.get('Pct_From_High', 0):.2f}" data-industry="{row.get('Industry', 'Unknown')}">
+            <tr data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
                 <td class="rank-cell">{i + 1}</td>
                 <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
-                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td class="industry-cell">{ind_name}</td>
                 <td>{row.get('Sector', '—')}</td>
                 <td>₹{_format_num(price)}</td>
-                <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+                <td class="pct-high-cell" style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</td>
                 <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
                 <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
-                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
                 <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
             </tr>"""
+            basing_cards += f"""
+            <div class="chart-card" data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)} · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
+                </div>
+                <div class="chart-card-canvas" id="chart-basing-{ticker_clean}"></div>
+            </div>"""
 
-    # ── Build launch pad rows ──
+    # ── Build launch pad rows & cards ──
     launch_pad_rows = ""
+    launch_pad_cards = ""
     launch_pad_count = 0
     if launch_pad_df is not None:
         launch_pad_count = len(launch_pad_df)
         for i, (_, row) in enumerate(launch_pad_df.iterrows()):
             ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
             price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
             launch_pad_rows += f"""
-            <tr data-industry="{row.get('Industry', 'Unknown')}">
+            <tr data-industry="{ind_name}" data-ticker="{ticker_clean}">
                 <td class="rank-cell">{i + 1}</td>
                 <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
-                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td class="industry-cell">{ind_name}</td>
                 <td>{row.get('Sector', '—')}</td>
                 <td>₹{_format_num(price)}</td>
                 <td>{_format_ma(price, row.get('EMA_10'))}</td>
                 <td>{_format_ma(price, row.get('EMA_20'))}</td>
                 <td>{_format_ma(price, row.get('SMA_50'))}</td>
-                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
                 <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
             </tr>"""
+            launch_pad_cards += f"""
+            <div class="chart-card" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)}</div>
+                </div>
+                <div class="chart-card-canvas" id="chart-launchpad-{ticker_clean}"></div>
+            </div>"""
 
-    # ── Build 10 SMA Reclaim rows ──
+    # ── Build 10 SMA Reclaim rows & cards ──
     reclaimed_10_sma_rows = ""
+    reclaimed_10_sma_cards = ""
     reclaimed_10_sma_count = 0
     if reclaimed_10_sma_df is not None:
         reclaimed_10_sma_count = len(reclaimed_10_sma_df)
         for i, (_, row) in enumerate(reclaimed_10_sma_df.iterrows()):
             ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
             price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
             reclaimed_10_sma_rows += f"""
-            <tr data-pct-from-high="{row.get('Pct_From_High', 0):.2f}" data-industry="{row.get('Industry', 'Unknown')}">
+            <tr data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
                 <td class="rank-cell">{i + 1}</td>
                 <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
-                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td class="industry-cell">{ind_name}</td>
                 <td>{row.get('Sector', '—')}</td>
                 <td>₹{_format_num(price)}</td>
                 <td>{_format_ma(price, row.get('SMA_10'))}</td>
-                <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+                <td class="pct-high-cell" style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</td>
                 <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
                 <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
-                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
                 <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
             </tr>"""
+            reclaimed_10_sma_cards += f"""
+            <div class="chart-card" data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)} · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
+                </div>
+                <div class="chart-card-canvas" id="chart-reclaim10-{ticker_clean}"></div>
+            </div>"""
 
-    # ── Build IPO 10 SMA Reclaim rows ──
+    # ── Build IPO 10 SMA Reclaim rows & cards ──
     ipo_reclaimed_10_sma_rows = ""
+    ipo_reclaimed_10_sma_cards = ""
     ipo_reclaimed_10_sma_count = 0
     if ipo_reclaimed_10_sma_df is not None:
         ipo_reclaimed_10_sma_count = len(ipo_reclaimed_10_sma_df)
         for i, (_, row) in enumerate(ipo_reclaimed_10_sma_df.iterrows()):
             ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
             price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
             listing_bars = int(row.get('Listing_Bars', 0))
             ipo_reclaimed_10_sma_rows += f"""
-            <tr data-pct-from-high="{row.get('Pct_From_High', 0):.2f}" data-industry="{row.get('Industry', 'Unknown')}">
+            <tr data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
                 <td class="rank-cell">{i + 1}</td>
                 <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
-                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td class="industry-cell">{ind_name}</td>
                 <td>{row.get('Sector', '—')}</td>
                 <td>₹{_format_num(price)}</td>
                 <td>{listing_bars}d</td>
                 <td>{_format_ma(price, row.get('SMA_10'))}</td>
-                <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+                <td class="pct-high-cell" style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</td>
                 <td style="color:{_rs_color(row.get('Return_1M', 0), True)}">{_format_num(row.get('Return_1M', 0))}%</td>
-                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
                 <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
             </tr>"""
+            ipo_reclaimed_10_sma_cards += f"""
+            <div class="chart-card" data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)} · {listing_bars}d · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
+                </div>
+                <div class="chart-card-canvas" id="chart-iporeclaim10-{ticker_clean}"></div>
+            </div>"""
 
     # ── Assemble stats ──
     total_stocks = len(stock_rs)
@@ -333,6 +444,7 @@ def generate_dashboard(
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 <style>
   :root {{
     --bg: #0a0a0f;
@@ -467,6 +579,97 @@ def generate_dashboard(
   .tab-btn.active {{ color: var(--accent); border-bottom-color: var(--accent); }}
   .tab-panel {{ display: none; }}
   .tab-panel.active {{ display: block; }}
+
+  /* ── View Switcher Buttons ── */
+  .view-switch {{
+    display: inline-flex;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px;
+    gap: 2px;
+  }}
+  .view-switch-btn {{
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }}
+  .view-switch-btn:hover {{ color: var(--text); }}
+  .view-switch-btn.active {{
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }}
+
+  /* ── Chart Grid (Deepvue Style Box Layout) ── */
+  .chart-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }}
+  .chart-card {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }}
+  .chart-card:hover {{
+    border-color: rgba(0, 230, 118, 0.3);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }}
+  .chart-card-header {{
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }}
+  .chart-card-title {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }}
+  .chart-card-ticker {{
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+  }}
+  .chart-card-rs {{
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(0, 230, 118, 0.12);
+    color: var(--accent);
+  }}
+  .chart-card-meta {{
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }}
+  .chart-card-canvas {{
+    width: 100%;
+    height: 270px;
+    position: relative;
+    background: #0d0d14;
+  }}
 
 </style>
 </head>
@@ -691,6 +894,10 @@ def generate_dashboard(
             <option value="20">Max 20% Depth</option>
             <option value="15">Max 15% Depth</option>
           </select>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('basing', 'table')" id="btn-view-basing-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('basing', 'grid')" id="btn-view-basing-grid">⊞ Chart Grid</button>
+          </div>
           <span id="basing-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-basing')">
@@ -698,7 +905,7 @@ def generate_dashboard(
           Copy
         </button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" id="view-table-basing">
         <table id="table-basing">
           <thead>
             <tr>
@@ -717,6 +924,9 @@ def generate_dashboard(
           <tbody>{basing_rows}</tbody>
         </table>
       </div>
+      <div class="chart-grid" id="view-grid-basing" style="display:none;">
+        {basing_cards}
+      </div>
     </div>
   </div>
 
@@ -727,6 +937,10 @@ def generate_dashboard(
         <div class="section-header-left">
           <span class="section-num">06</span>
           <span class="section-title">Launch Pad Setups ({launch_pad_count})</span>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('launchpad', 'table')" id="btn-view-launchpad-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('launchpad', 'grid')" id="btn-view-launchpad-grid">⊞ Chart Grid</button>
+          </div>
           <span id="launchpad-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-launchpad')">
@@ -734,7 +948,7 @@ def generate_dashboard(
           Copy
         </button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" id="view-table-launchpad">
         <table id="table-launchpad">
           <thead>
             <tr>
@@ -753,6 +967,9 @@ def generate_dashboard(
           <tbody>{launch_pad_rows}</tbody>
         </table>
       </div>
+      <div class="chart-grid" id="view-grid-launchpad" style="display:none;">
+        {launch_pad_cards}
+      </div>
     </div>
   </div>
 
@@ -770,6 +987,10 @@ def generate_dashboard(
             <option value="20">Max 20% Depth</option>
             <option value="15">Max 15% Depth</option>
           </select>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('reclaim10', 'table')" id="btn-view-reclaim10-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('reclaim10', 'grid')" id="btn-view-reclaim10-grid">⊞ Chart Grid</button>
+          </div>
           <span id="reclaim-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-reclaim10')">
@@ -777,7 +998,7 @@ def generate_dashboard(
           Copy
         </button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" id="view-table-reclaim10">
         <table id="table-reclaim10">
           <thead>
             <tr>
@@ -797,6 +1018,9 @@ def generate_dashboard(
           <tbody>{reclaimed_10_sma_rows}</tbody>
         </table>
       </div>
+      <div class="chart-grid" id="view-grid-reclaim10" style="display:none;">
+        {reclaimed_10_sma_cards}
+      </div>
     </div>
   </div>
 
@@ -814,6 +1038,10 @@ def generate_dashboard(
             <option value="20">Max 20% Depth</option>
             <option value="15">Max 15% Depth</option>
           </select>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('iporeclaim10', 'table')" id="btn-view-iporeclaim10-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('iporeclaim10', 'grid')" id="btn-view-iporeclaim10-grid">⊞ Chart Grid</button>
+          </div>
           <span id="ipo-reclaim-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-iporeclaim10')">
@@ -821,7 +1049,7 @@ def generate_dashboard(
           Copy
         </button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" id="view-table-iporeclaim10">
         <table id="table-iporeclaim10">
           <thead>
             <tr>
@@ -840,6 +1068,9 @@ def generate_dashboard(
           </thead>
           <tbody>{ipo_reclaimed_10_sma_rows}</tbody>
         </table>
+      </div>
+      <div class="chart-grid" id="view-grid-iporeclaim10" style="display:none;">
+        {ipo_reclaimed_10_sma_cards}
       </div>
     </div>
   </div>
@@ -898,6 +1129,7 @@ def generate_dashboard(
   function filterBasing() {{
     const maxDepth = parseFloat(document.getElementById('base-depth-filter').value) * -1;
     const rows = document.querySelectorAll('#table-basing tbody tr');
+    const cards = document.querySelectorAll('#view-grid-basing .chart-card');
     let visibleCount = 0;
     
     rows.forEach(row => {{
@@ -908,6 +1140,11 @@ def generate_dashboard(
       }} else {{
         row.style.display = 'none';
       }}
+    }});
+
+    cards.forEach(card => {{
+      const pctFromHigh = parseFloat(card.getAttribute('data-pct-from-high'));
+      card.style.display = (pctFromHigh >= maxDepth) ? '' : 'none';
     }});
     
     updateInsights('table-basing', 'basing-insights');
@@ -917,6 +1154,7 @@ def generate_dashboard(
   function filterReclaim() {{
     const maxDepth = parseFloat(document.getElementById('reclaim-depth-filter').value) * -1;
     const rows = document.querySelectorAll('#table-reclaim10 tbody tr');
+    const cards = document.querySelectorAll('#view-grid-reclaim10 .chart-card');
     let visibleCount = 0;
     
     rows.forEach(row => {{
@@ -928,6 +1166,11 @@ def generate_dashboard(
         row.style.display = 'none';
       }}
     }});
+
+    cards.forEach(card => {{
+      const pctFromHigh = parseFloat(card.getAttribute('data-pct-from-high'));
+      card.style.display = (pctFromHigh >= maxDepth) ? '' : 'none';
+    }});
     
     updateInsights('table-reclaim10', 'reclaim-insights');
   }}
@@ -936,6 +1179,7 @@ def generate_dashboard(
   function filterIPOReclaim() {{
     const maxDepth = parseFloat(document.getElementById('ipo-reclaim-depth-filter').value) * -1;
     const rows = document.querySelectorAll('#table-iporeclaim10 tbody tr');
+    const cards = document.querySelectorAll('#view-grid-iporeclaim10 .chart-card');
     let visibleCount = 0;
     
     rows.forEach(row => {{
@@ -946,6 +1190,11 @@ def generate_dashboard(
       }} else {{
         row.style.display = 'none';
       }}
+    }});
+
+    cards.forEach(card => {{
+      const pctFromHigh = parseFloat(card.getAttribute('data-pct-from-high'));
+      card.style.display = (pctFromHigh >= maxDepth) ? '' : 'none';
     }});
     
     updateInsights('table-iporeclaim10', 'ipo-reclaim-insights');
@@ -1209,6 +1458,124 @@ def generate_dashboard(
           }},
           options: getChartOptions('Composite RS Spread (%)')
       }});
+  }}
+
+  // ── Candle & Indicator Data for Chart Grid ──
+  const candlesData = {candles_json};
+  const chartsCreated = {{}};
+
+  function switchView(tabKey, mode) {{
+    const tblWrap = document.getElementById(`view-table-${{tabKey}}`);
+    const gridWrap = document.getElementById(`view-grid-${{tabKey}}`);
+    const btnTable = document.getElementById(`btn-view-${{tabKey}}-table`);
+    const btnGrid = document.getElementById(`btn-view-${{tabKey}}-grid`);
+
+    if (mode === 'grid') {{
+      tblWrap.style.display = 'none';
+      gridWrap.style.display = 'grid';
+      btnTable.classList.remove('active');
+      btnGrid.classList.add('active');
+      renderGridCharts(tabKey);
+    }} else {{
+      tblWrap.style.display = 'block';
+      gridWrap.style.display = 'none';
+      btnTable.classList.add('active');
+      btnGrid.classList.remove('active');
+    }}
+  }}
+
+  function renderGridCharts(tabKey) {{
+    const gridWrap = document.getElementById(`view-grid-${{tabKey}}`);
+    if (!gridWrap || !window.LightweightCharts) return;
+
+    const cards = gridWrap.querySelectorAll('.chart-card');
+    cards.forEach(card => {{
+      const ticker = card.getAttribute('data-ticker');
+      const canvasId = `chart-${{tabKey}}-${{ticker}}`;
+      const container = document.getElementById(canvasId);
+
+      if (!container || chartsCreated[canvasId]) return;
+
+      const bars = candlesData[ticker];
+      if (!bars || bars.length === 0) {{
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:12px;font-family:var(--mono);">No chart data available</div>';
+        return;
+      }}
+
+      try {{
+        const chart = LightweightCharts.createChart(container, {{
+          width: container.clientWidth || 400,
+          height: 270,
+          layout: {{
+            background: {{ color: '#0e0e17' }},
+            textColor: '#8e8ea0',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 10,
+          }},
+          grid: {{
+            vertLines: {{ color: 'rgba(255,255,255,0.03)' }},
+            horzLines: {{ color: 'rgba(255,255,255,0.03)' }},
+          }},
+          crosshair: {{
+            mode: LightweightCharts.CrosshairMode.Normal,
+          }},
+          rightPriceScale: {{
+            borderColor: 'rgba(255,255,255,0.06)',
+            scaleMargins: {{ top: 0.1, bottom: 0.25 }},
+          }},
+          timeScale: {{
+            borderColor: 'rgba(255,255,255,0.06)',
+            visible: true,
+          }},
+        }});
+
+        // 1. Candlestick series
+        const candleSeries = chart.addCandlestickSeries({{
+          upColor: '#00e676',
+          downColor: '#ef5350',
+          borderVisible: false,
+          wickUpColor: '#00e676',
+          wickDownColor: '#ef5350',
+        }});
+        candleSeries.setData(bars.map(b => ({{
+          time: b.time, open: b.open, high: b.high, low: b.low, close: b.close
+        }})));
+
+        // 2. Volume series at bottom
+        const volumeSeries = chart.addHistogramSeries({{
+          color: 'rgba(0, 230, 118, 0.3)',
+          priceFormat: {{ type: 'volume' }},
+          priceScaleId: '',
+          scaleMargins: {{ top: 0.8, bottom: 0 }},
+        }});
+        volumeSeries.setData(bars.map(b => ({{
+          time: b.time,
+          value: b.volume,
+          color: b.close >= b.open ? 'rgba(0, 230, 118, 0.4)' : 'rgba(239, 83, 80, 0.4)'
+        }})));
+
+        // 3. 10 EMA (green/cyan)
+        const ema10Series = chart.addLineSeries({{ color: '#00e5ff', lineWidth: 1, title: '10 EMA' }});
+        ema10Series.setData(bars.filter(b => b.ema10 !== null).map(b => ({{ time: b.time, value: b.ema10 }})));
+
+        // 4. 20 EMA (purple)
+        const ema20Series = chart.addLineSeries({{ color: '#b388ff', lineWidth: 1, title: '20 EMA' }});
+        ema20Series.setData(bars.filter(b => b.ema20 !== null).map(b => ({{ time: b.time, value: b.ema20 }})));
+
+        // 5. 50 SMA (orange)
+        const sma50Series = chart.addLineSeries({{ color: '#ff9100', lineWidth: 1.5, title: '50 SMA' }});
+        sma50Series.setData(bars.filter(b => b.sma50 !== null).map(b => ({{ time: b.time, value: b.sma50 }})));
+
+        // 6. 200 SMA (white)
+        const sma200Series = chart.addLineSeries({{ color: '#ffffff', lineWidth: 1.5, title: '200 SMA' }});
+        sma200Series.setData(bars.filter(b => b.sma200 !== null).map(b => ({{ time: b.time, value: b.sma200 }})));
+
+        chart.timeScale().fitContent();
+        chartsCreated[canvasId] = chart;
+      }} catch (err) {{
+        console.error('Error rendering chart for ' + ticker, err);
+      }}
+    }});
   }}
 </script>
 </body>
