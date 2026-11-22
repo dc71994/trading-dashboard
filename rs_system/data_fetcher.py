@@ -89,13 +89,14 @@ def fetch_prices(tickers: list, period: str = '1y', batch_size: int = 80) -> dic
             continue
             
         loaded_count = 0
+        min_bars = getattr(config, 'MIN_TRADING_DAYS', 15)
         if len(batch_tickers) == 1:
             ticker = batch_tickers[0]
             df = data.copy()
             if isinstance(df.columns, pd.MultiIndex):
                 # Flatten the MultiIndex returned by newer yfinance versions
                 df.columns = [col[0] for col in df.columns]
-            if len(df) >= 100:
+            if len(df) >= min_bars:
                 result[ticker] = df
                 loaded_count += 1
         else:
@@ -104,7 +105,7 @@ def fetch_prices(tickers: list, period: str = '1y', batch_size: int = 80) -> dic
                     df = data[ticker].dropna(how='all').copy()
                     if isinstance(df.columns, pd.MultiIndex):
                         df.columns = [col[0] for col in df.columns]
-                    if len(df) >= 100:
+                    if len(df) >= min_bars:
                         result[ticker] = df
                         loaded_count += 1
                         

@@ -103,9 +103,11 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
         max_base_dd = 0.0
         prior_leg_gain = 0.0
         vol_dry_up = False
+        listing_bars = len(df)
+        listing_day_low = df['Low'].iloc[0] if len(df) > 0 else 0
         
         base_low_price = current_price
-        if len(df) > 80:
+        if len(df) >= 15:
             peak_idx = int(df['High'].argmax())
             days_since_peak = len(df) - 1 - peak_idx
             
@@ -148,6 +150,8 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'SMA_50_Rising': sma_50_rising,
             'SMA_200_Rising': sma_200_rising,
             'Base_Low_Price': base_low_price,
+            'Listing_Bars': listing_bars,
+            'Listing_Day_Low': listing_day_low,
             'Reclaimed_10_SMA': reclaimed_10_sma,
             'Days_Since_Peak': days_since_peak,
             'Max_Base_DD': max_base_dd,
@@ -163,7 +167,7 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Ticker', 'Current_Price', 'High_52W', 'Low_52W', 'Pct_From_High', 'Pct_From_Low', 'Avg_Volume',
             'Return_1W', 'Return_1M', 'Return_3M', 'Return_6M',
             'RS_Composite', 'RS_Percentile',
-            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'SMA_50_Rising', 'SMA_200_Rising', 'Base_Low_Price', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
+            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'SMA_50_Rising', 'SMA_200_Rising', 'Base_Low_Price', 'Listing_Bars', 'Listing_Day_Low', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
         ])
         
     # Rank and calculate percentile (0-99)
@@ -436,6 +440,51 @@ def find_reclaimed_10_sma_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame)
     dd_cond = (df['Max_Base_DD'] >= -35.0) & (df['Pct_From_High'] >= -35.0)
     
     filtered = df[reclaim_cond & ma_align & rising_ma & base_floor & low_clearance & prior_cond & base_cond & dd_cond].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
+    
+    return filtered
+
+
+def find_ipo_reclaimed_10_sma_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds newly listed / IPO stocks (15 to 150 trading days history) that consolidated and reclaimed their 10 SMA.
+    """
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    
+    if 'Reclaimed_10_SMA' not in merged.columns or 'Listing_Bars' not in merged.columns:
+        return pd.DataFrame()
+        
+    # Check valid 10 SMA
+    valid_ma = merged['SMA_10'].notna()
+    df = merged[valid_ma].copy()
+    if df.empty:
+        return df
+
+    # 1. IPO Listing Age: between 15 and 150 trading days
+    ipo_age = (df['Listing_Bars'] >= 15) & (df['Listing_Bars'] <= 150)
+    
+    # 2. Reclaimed 10 SMA in the last 5 days
+    reclaim_cond = df['Reclaimed_10_SMA'] == True
+    
+    # 3. IPO Support & Trend:
+    # - Price above listing day low (no broken IPOs)
+    floor_cond = df['Current_Price'] >= df['Listing_Day_Low']
+    # - If 20 EMA is available, Price > 20 EMA
+    ema20_cond = df['EMA_20'].isna() | (df['Current_Price'] >= df['EMA_20'])
+    # - If 50 SMA is available, Price > 50 SMA
+    sma50_cond = df['SMA_50'].isna() | (df['Current_Price'] >= df['SMA_50'])
+    
+    # 4. Prior IPO Run-Up / Demand: gained >= 15% from listing low to high OR from recent low
+    momentum_cond = (df['Pct_From_Low'] >= 15.0) | (df['Prior_Leg_Gain'] >= 15.0) | (df['Return_1M'] >= 10.0)
+    
+    # 5. Consolidation: >= 8 bars base, max depth <= 35%
+    base_cond = (df['Days_Since_Peak'] >= 8) & (df['Days_Since_Peak'] <= 120)
+    dd_cond = (df['Max_Base_DD'] >= -35.0) & (df['Pct_From_High'] >= -35.0)
+    
+    filtered = df[ipo_age & reclaim_cond & floor_cond & ema20_cond & sma50_cond & momentum_cond & base_cond & dd_cond].copy()
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     
     return filtered

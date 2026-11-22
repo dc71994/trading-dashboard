@@ -130,6 +130,7 @@ def generate_dashboard(
     basing_df: pd.DataFrame = None,
     launch_pad_df: pd.DataFrame = None,
     reclaimed_10_sma_df: pd.DataFrame = None,
+    ipo_reclaimed_10_sma_df: pd.DataFrame = None,
 ) -> str:
     ensure_output_dir()
     date_stamp = get_date_stamp()
@@ -288,6 +289,30 @@ def generate_dashboard(
                 <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
                 <td style="color:{_rs_color(row.get('Return_3M', 0), True)}">{_format_num(row.get('Return_3M', 0))}%</td>
                 <td style="color:{_rs_color(row.get('Return_6M', 0), True)}">{_format_num(row.get('Return_6M', 0))}%</td>
+                <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
+
+    # ── Build IPO 10 SMA Reclaim rows ──
+    ipo_reclaimed_10_sma_rows = ""
+    ipo_reclaimed_10_sma_count = 0
+    if ipo_reclaimed_10_sma_df is not None:
+        ipo_reclaimed_10_sma_count = len(ipo_reclaimed_10_sma_df)
+        for i, (_, row) in enumerate(ipo_reclaimed_10_sma_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            listing_bars = int(row.get('Listing_Bars', 0))
+            ipo_reclaimed_10_sma_rows += f"""
+            <tr data-pct-from-high="{row.get('Pct_From_High', 0):.2f}" data-industry="{row.get('Industry', 'Unknown')}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{row.get('Industry', '—')}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td>{listing_bars}d</td>
+                <td>{_format_ma(price, row.get('SMA_10'))}</td>
+                <td class="pct-high-cell" style="color:{_rs_color(row.get('Pct_From_High', 0), True)}">{_format_num(row.get('Pct_From_High', 0))}%</td>
+                <td style="color:{_rs_color(row.get('Return_1M', 0), True)}">{_format_num(row.get('Return_1M', 0))}%</td>
                 <td class="rs-cell" style="color:{_rs_color(row.get('RS_Percentile', 0))}">{int(row.get('RS_Percentile', 0))}</td>
                 <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
             </tr>"""
@@ -484,6 +509,7 @@ def generate_dashboard(
     <button class="tab-btn" onclick="showTab('basing')" style="color:var(--accent);">// Basing Setups</button>
     <button class="tab-btn" onclick="showTab('launchpad')" style="color:var(--accent);">// Launch Pads</button>
     <button class="tab-btn" onclick="showTab('reclaim10')" style="color:var(--accent);">// 10 SMA Reclaim</button>
+    <button class="tab-btn" onclick="showTab('iporeclaim10')" style="color:var(--accent);">// IPO 10 SMA Reclaim</button>
   </div>
   
   <!-- Tab: Industry Trend -->
@@ -774,6 +800,50 @@ def generate_dashboard(
     </div>
   </div>
 
+  <!-- Tab: IPO 10 SMA Reclaim -->
+  <div id="tab-iporeclaim10" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num">08</span>
+          <span class="section-title">IPO 10-Day SMA Reclaim ({ipo_reclaimed_10_sma_count})</span>
+          <select id="ipo-reclaim-depth-filter" onchange="filterIPOReclaim()" style="margin-left:16px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="35">Max 35% Depth</option>
+            <option value="30">Max 30% Depth</option>
+            <option value="25">Max 25% Depth</option>
+            <option value="20">Max 20% Depth</option>
+            <option value="15">Max 15% Depth</option>
+          </select>
+          <span id="ipo-reclaim-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-iporeclaim10')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table id="table-iporeclaim10">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>Age</th>
+              <th>10 SMA</th>
+              <th>% From High</th>
+              <th>1M</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{ipo_reclaimed_10_sma_rows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -861,6 +931,25 @@ def generate_dashboard(
     
     updateInsights('table-reclaim10', 'reclaim-insights');
   }}
+
+  // ── IPO 10 SMA Reclaim Filter & Insights ──
+  function filterIPOReclaim() {{
+    const maxDepth = parseFloat(document.getElementById('ipo-reclaim-depth-filter').value) * -1;
+    const rows = document.querySelectorAll('#table-iporeclaim10 tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {{
+      const pctFromHigh = parseFloat(row.getAttribute('data-pct-from-high'));
+      if (pctFromHigh >= maxDepth) {{
+        row.style.display = '';
+        visibleCount++;
+      }} else {{
+        row.style.display = 'none';
+      }}
+    }});
+    
+    updateInsights('table-iporeclaim10', 'ipo-reclaim-insights');
+  }}
   
   function updateInsights(tableId, spanId) {{
     const rows = document.querySelectorAll(`#${{tableId}} tbody tr`);
@@ -891,6 +980,7 @@ def generate_dashboard(
   setTimeout(() => {{
     filterBasing();
     filterReclaim();
+    filterIPOReclaim();
     updateInsights('table-launchpad', 'launchpad-insights');
   }}, 100);
 

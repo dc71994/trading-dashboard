@@ -22,7 +22,7 @@ LOOKBACK_DAYS = {
 YFINANCE_BATCH_SIZE = 80          # Tickers per yfinance batch call
 YFINANCE_PERIOD = "1y"            # Download window
 YFINANCE_RETRY_COUNT = 1          # Retry failed tickers once
-MIN_TRADING_DAYS = 100            # Minimum data points needed
+MIN_TRADING_DAYS = 15             # Minimum data points needed (allows IPOs with >=15 bars)
 
 # ─── Filters ────────────────────────────────────────────────────────
 MIN_AVG_VOLUME = 10_000           # Minimum avg daily volume (shares)
