@@ -149,7 +149,7 @@ def generate_dashboard(
         sector_history_json = sector_history_df.to_json(orient="records")
 
     # ── Stock Candle & MA Data for Grid View ──
-    # Extract last 75 bars for candidates in Basing, Launchpad, and Reclaims
+    # Extract up to 250 bars (full 1 year) for candidates in Basing, Launchpad, and Reclaims
     candidate_tickers = set()
     for df_cand in [basing_df, launch_pad_df, reclaimed_10_sma_df, ipo_reclaimed_10_sma_df]:
         if df_cand is not None and not df_cand.empty and 'Ticker' in df_cand.columns:
@@ -163,7 +163,7 @@ def generate_dashboard(
                 if isinstance(df_p.columns, pd.MultiIndex):
                     df_p.columns = [c[0] for c in df_p.columns]
                 if len(df_p) >= 10:
-                    recent = df_p.tail(75)
+                    recent = df_p.tail(250)
                     close_s = df_p['Close']
                     ema10_s = close_s.ewm(span=10, adjust=False).mean()
                     ema20_s = close_s.ewm(span=20, adjust=False).mean()
@@ -898,6 +898,18 @@ def generate_dashboard(
             <button class="view-switch-btn active" onclick="switchView('basing', 'table')" id="btn-view-basing-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('basing', 'grid')" id="btn-view-basing-grid">⊞ Chart Grid</button>
           </div>
+          <select id="grid-ma-filter-basing" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-basing" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
           <span id="basing-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-basing')">
@@ -941,6 +953,18 @@ def generate_dashboard(
             <button class="view-switch-btn active" onclick="switchView('launchpad', 'table')" id="btn-view-launchpad-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('launchpad', 'grid')" id="btn-view-launchpad-grid">⊞ Chart Grid</button>
           </div>
+          <select id="grid-ma-filter-launchpad" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-launchpad" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
           <span id="launchpad-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-launchpad')">
@@ -991,6 +1015,18 @@ def generate_dashboard(
             <button class="view-switch-btn active" onclick="switchView('reclaim10', 'table')" id="btn-view-reclaim10-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('reclaim10', 'grid')" id="btn-view-reclaim10-grid">⊞ Chart Grid</button>
           </div>
+          <select id="grid-ma-filter-reclaim10" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-reclaim10" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
           <span id="reclaim-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-reclaim10')">
@@ -1042,6 +1078,18 @@ def generate_dashboard(
             <button class="view-switch-btn active" onclick="switchView('iporeclaim10', 'table')" id="btn-view-iporeclaim10-table">≡ Table</button>
             <button class="view-switch-btn" onclick="switchView('iporeclaim10', 'grid')" id="btn-view-iporeclaim10-grid">⊞ Chart Grid</button>
           </div>
+          <select id="grid-ma-filter-iporeclaim10" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-iporeclaim10" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
           <span id="ipo-reclaim-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
         </div>
         <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-iporeclaim10')">
@@ -1463,6 +1511,8 @@ def generate_dashboard(
   // ── Candle & Indicator Data for Chart Grid ──
   const candlesData = {candles_json};
   const chartsCreated = {{}};
+  let currentMAMode = '10-50';
+  let currentBarsCount = 120;
 
   function switchView(tabKey, mode) {{
     const tblWrap = document.getElementById(`view-table-${{tabKey}}`);
@@ -1482,6 +1532,47 @@ def generate_dashboard(
       btnTable.classList.add('active');
       btnGrid.classList.remove('active');
     }}
+  }}
+
+  function updateGlobalMA(val) {{
+    currentMAMode = val;
+    // sync all MA dropdowns across tabs
+    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10'].forEach(k => {{
+      const sel = document.getElementById(`grid-ma-filter-${{k}}`);
+      if (sel) sel.value = val;
+    }});
+
+    // Update lines visibility across all instantiated charts
+    Object.keys(chartsCreated).forEach(canvasId => {{
+      const cObj = chartsCreated[canvasId];
+      if (!cObj) return;
+      cObj.ema10.applyOptions({{ visible: (val === '10-50' || val === '10-20-50' || val === 'all') }});
+      cObj.ema20.applyOptions({{ visible: (val === '10-20-50' || val === 'all') }});
+      cObj.sma50.applyOptions({{ visible: (val === '10-50' || val === '10-20-50' || val === 'all') }});
+      cObj.sma200.applyOptions({{ visible: (val === 'all') }});
+    }});
+  }}
+
+  function updateGlobalBars(val) {{
+    const count = parseInt(val, 10);
+    currentBarsCount = count;
+    // sync all bars dropdowns across tabs
+    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10'].forEach(k => {{
+      const sel = document.getElementById(`grid-bars-filter-${{k}}`);
+      if (sel) sel.value = val;
+    }});
+
+    // Update time range / visible bars across all charts
+    Object.keys(chartsCreated).forEach(canvasId => {{
+      const cObj = chartsCreated[canvasId];
+      if (!cObj || !cObj.bars || cObj.bars.length === 0) return;
+      const bLen = cObj.bars.length;
+      const fromIdx = Math.max(0, bLen - count);
+      cObj.chart.timeScale().setVisibleRange({{
+        from: cObj.bars[fromIdx].time,
+        to: cObj.bars[bLen - 1].time
+      }});
+    }});
   }}
 
   function renderGridCharts(tabKey) {{
@@ -1529,13 +1620,15 @@ def generate_dashboard(
           }},
         }});
 
-        // 1. Candlestick series
+        // 1. Candlestick series (ONLY price tag visible on the price axis)
         const candleSeries = chart.addCandlestickSeries({{
           upColor: '#00e676',
           downColor: '#ef5350',
           borderVisible: false,
           wickUpColor: '#00e676',
           wickDownColor: '#ef5350',
+          lastValueVisible: true,
+          priceLineVisible: false,
         }});
         candleSeries.setData(bars.map(b => ({{
           time: b.time, open: b.open, high: b.high, low: b.low, close: b.close
@@ -1543,9 +1636,9 @@ def generate_dashboard(
 
         // 2. Volume series at bottom
         const volumeSeries = chart.addHistogramSeries({{
-          color: 'rgba(0, 230, 118, 0.3)',
           priceFormat: {{ type: 'volume' }},
           priceScaleId: '',
+          lastValueVisible: true,
           scaleMargins: {{ top: 0.8, bottom: 0 }},
         }});
         volumeSeries.setData(bars.map(b => ({{
@@ -1554,24 +1647,64 @@ def generate_dashboard(
           color: b.close >= b.open ? 'rgba(0, 230, 118, 0.4)' : 'rgba(239, 83, 80, 0.4)'
         }})));
 
-        // 3. 10 EMA (green/cyan)
-        const ema10Series = chart.addLineSeries({{ color: '#00e5ff', lineWidth: 1, title: '10 EMA' }});
+        // 3. 10 EMA (cyan) - axis label and price tag disabled for clean view
+        const ema10Series = chart.addLineSeries({{
+          color: '#00e5ff',
+          lineWidth: 1.5,
+          lastValueVisible: false,
+          priceLineVisible: false,
+          visible: (currentMAMode === '10-50' || currentMAMode === '10-20-50' || currentMAMode === 'all')
+        }});
         ema10Series.setData(bars.filter(b => b.ema10 !== null).map(b => ({{ time: b.time, value: b.ema10 }})));
 
         // 4. 20 EMA (purple)
-        const ema20Series = chart.addLineSeries({{ color: '#b388ff', lineWidth: 1, title: '20 EMA' }});
+        const ema20Series = chart.addLineSeries({{
+          color: '#b388ff',
+          lineWidth: 1.5,
+          lastValueVisible: false,
+          priceLineVisible: false,
+          visible: (currentMAMode === '10-20-50' || currentMAMode === 'all')
+        }});
         ema20Series.setData(bars.filter(b => b.ema20 !== null).map(b => ({{ time: b.time, value: b.ema20 }})));
 
         // 5. 50 SMA (orange)
-        const sma50Series = chart.addLineSeries({{ color: '#ff9100', lineWidth: 1.5, title: '50 SMA' }});
+        const sma50Series = chart.addLineSeries({{
+          color: '#ff9100',
+          lineWidth: 1.5,
+          lastValueVisible: false,
+          priceLineVisible: false,
+          visible: (currentMAMode === '10-50' || currentMAMode === '10-20-50' || currentMAMode === 'all')
+        }});
         sma50Series.setData(bars.filter(b => b.sma50 !== null).map(b => ({{ time: b.time, value: b.sma50 }})));
 
         // 6. 200 SMA (white)
-        const sma200Series = chart.addLineSeries({{ color: '#ffffff', lineWidth: 1.5, title: '200 SMA' }});
+        const sma200Series = chart.addLineSeries({{
+          color: '#ffffff',
+          lineWidth: 1.5,
+          lastValueVisible: false,
+          priceLineVisible: false,
+          visible: (currentMAMode === 'all')
+        }});
         sma200Series.setData(bars.filter(b => b.sma200 !== null).map(b => ({{ time: b.time, value: b.sma200 }})));
 
-        chart.timeScale().fitContent();
-        chartsCreated[canvasId] = chart;
+        // Apply initial bars view range
+        const bLen = bars.length;
+        const fromIdx = Math.max(0, bLen - currentBarsCount);
+        chart.timeScale().setVisibleRange({{
+          from: bars[fromIdx].time,
+          to: bars[bLen - 1].time
+        }});
+
+        chartsCreated[canvasId] = {{
+          chart: chart,
+          bars: bars,
+          candleSeries: candleSeries,
+          volumeSeries: volumeSeries,
+          ema10: ema10Series,
+          ema20: ema20Series,
+          sma50: sma50Series,
+          sma200: sma200Series
+        }};
       }} catch (err) {{
         console.error('Error rendering chart for ' + ticker, err);
       }}
