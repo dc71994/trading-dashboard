@@ -58,6 +58,7 @@ ACI.NS,Process Industries,Chemicals: Major Diversified
 ACL.NS,Non-Energy Minerals,Construction Materials
 ACMESOLAR.NS,Industrial Services,Engineering & Construction
 ACSTECH.NS,Process Industries,Textiles
+ACTIVEINFR.NS,Industrial Services,Engineering & Construction
 ACUTAAS.NS,Health Technology,Pharmaceuticals: Major
 ADANIENSOL.NS,Utilities,Electric Utilities
 ADANIENT.NS,Distribution Services,Wholesale Distributors
@@ -173,6 +174,7 @@ AMBUJACEM.NS,Non-Energy Minerals,Construction Materials
 AMCL.NS,Non-Energy Minerals,Aluminum
 AMDIND.NS,Producer Manufacturing,Miscellaneous Manufacturing
 AMEYA.NS,Producer Manufacturing,Industrial Machinery
+AMIABLE.NS,Transportation,Air Freight/Couriers
 AMJLAND.NS,Finance,Real Estate Development
 AMNPLST.NS,Process Industries,Chemicals: Specialty
 AMRUTANJAN.NS,Health Technology,Pharmaceuticals: Other
@@ -260,7 +262,6 @@ ASAHIINDIA.NS,Consumer Durables,Home Furnishings
 ASAHISONG.NS,Process Industries,Chemicals: Specialty
 ASAL.NS,Producer Manufacturing,Auto Parts: OEM
 ASALCBR.NS,Consumer Non-Durables,Beverages: Alcoholic
-ASCOM.NS,Finance,Finance/Rental/Leasing
 ASHALOG.NS,Transportation,Air Freight/Couriers
 ASHAPURMIN.NS,Non-Energy Minerals,Other Metals/Minerals
 ASHIANA.NS,Finance,Real Estate Development
@@ -496,6 +497,7 @@ BPL.NS,Electronic Technology,Telecommunications Equipment
 BPLPHARMA.NS,Health Technology,Pharmaceuticals: Major
 BRACEPORT.NS,Transportation,Air Freight/Couriers
 BRAHMINFRA.NS,Industrial Services,Engineering & Construction
+BRAHMVIRAT.NS,Consumer Non-Durables,Apparel/Footwear
 BRANDMAN.NS,Retail Trade,Apparel/Footwear Retail
 BRIGADE.NS,Finance,Real Estate Development
 BRIGHOTEL.NS,Consumer Services,Hotels/Resorts/Cruise lines
@@ -628,6 +630,7 @@ CONCORDBIO.NS,Commercial Services,Miscellaneous Commercial Services
 CONFIPET.NS,Retail Trade,Specialty Stores
 CONNPLEX.NS,Consumer Services,Movies/Entertainment
 CONSOFINVT.NS,Finance,Financial Conglomerates
+CONTI.NS,Non-Energy Minerals,Forest Products
 CONTROLPR.NS,Electronic Technology,Computer Peripherals
 COOLCAPS.NS,Producer Manufacturing,Miscellaneous Manufacturing
 CORALFINAC.NS,Finance,Investment Managers
@@ -744,7 +747,6 @@ DHARMAJ.NS,Process Industries,Chemicals: Agricultural
 DHATRE.NS,Non-Energy Minerals,Steel
 DHOOTTRANS.NS,Producer Manufacturing,Electrical Products
 DHRUV.NS,Industrial Services,Engineering & Construction
-DHTL.NS,Technology Services,Internet Software/Services
 DHUNINV.NS,Process Industries,Chemicals: Specialty
 DIACABS.NS,Producer Manufacturing,Electrical Products
 DIAMINESQ.NS,Process Industries,Chemicals: Major Diversified
@@ -756,7 +758,6 @@ DIGIKORE.NS,Consumer Services,Movies/Entertainment
 DIGISPICE.NS,Technology Services,Packaged Software
 DIGITIDE.NS,Commercial Services,Miscellaneous Commercial Services
 DIGJAMLMTD.NS,Process Industries,Textiles
-DIRL.NS,Finance,Real Estate Development
 DISAQ.NS,Producer Manufacturing,Industrial Machinery
 DISHTV.NS,Communications,Specialty Telecommunications
 DIVGIITTS.NS,Producer Manufacturing,Auto Parts: OEM
@@ -765,6 +766,7 @@ DIVISLAB.NS,Health Technology,Pharmaceuticals: Major
 DIVYADHAN.NS,Process Industries,Textiles
 DIXON.NS,Electronic Technology,Electronic Production Equipment
 DJML.NS,Commercial Services,Commercial Printing/Forms
+DKEGL.NS,Process Industries,Containers/Packaging
 DLF.NS,Finance,Real Estate Development
 DLINKINDIA.NS,Electronic Technology,Telecommunications Equipment
 DMART.NS,Retail Trade,Food Retail
@@ -787,7 +789,7 @@ DREAMFOLKS.NS,Transportation,Other Transportation
 DREDGECORP.NS,Transportation,Marine Shipping
 DRONE.NS,Electronic Technology,Aerospace & Defense
 DRREDDY.NS,Health Technology,Pharmaceuticals: Major
-DRSCARGO.NS,Transportation,Trucking
+DRSDILIP.NS,Transportation,Trucking
 DSFCL.NS,Process Industries,Chemicals: Major Diversified
 DSKULKARNI.NS,Finance,Real Estate Development
 DSSL.NS,Technology Services,Information Technology Services
@@ -1060,7 +1062,6 @@ GOKUL.NS,Process Industries,Agricultural Commodities/Milling
 GOKULAGRO.NS,Process Industries,Agricultural Commodities/Milling
 GOLDENTOBC.NS,Finance,Real Estate Development
 GOLDIAM.NS,Consumer Durables,Other Consumer Specialties
-GOLDKART.NS,Retail Trade,Specialty Stores
 GOLDSTAR.NS,Producer Manufacturing,Electrical Products
 GOLDTECH.NS,Technology Services,Information Technology Services
 GOODLUCK.NS,Non-Energy Minerals,Steel
@@ -1378,6 +1379,7 @@ JAINAM.NS,Producer Manufacturing,Metal Fabrication
 JAINIK.NS,Non-Energy Minerals,Aluminum
 JAINREC.NS,Non-Energy Minerals,Other Metals/Minerals
 JAIPURKURT.NS,Consumer Non-Durables,Apparel/Footwear
+JAKHARIA.NS,Process Industries,Textiles
 JALAN.NS,Transportation,Air Freight/Couriers
 JAMNAAUTO.NS,Producer Manufacturing,Auto Parts: OEM
 JARO.NS,Technology Services,Internet Software/Services
@@ -1393,6 +1395,7 @@ JAYSREETEA.NS,Process Industries,Agricultural Commodities/Milling
 JBMA.NS,Producer Manufacturing,Auto Parts: OEM
 JENBURPH.NS,Health Technology,Pharmaceuticals: Major
 JETFREIGHT.NS,Transportation,Airlines
+JETKNIT.NS,Consumer Non-Durables,Apparel/Footwear
 JEYYAM.NS,Consumer Non-Durables,Food: Major Diversified
 JFLLIFE.NS,Health Technology,Pharmaceuticals: Major
 JGCHEM.NS,Process Industries,Chemicals: Specialty
@@ -1413,6 +1416,7 @@ JKIL.NS,Industrial Services,Engineering & Construction
 JKIPL.NS,Distribution Services,Wholesale Distributors
 JKLAKSHMI.NS,Non-Energy Minerals,Construction Materials
 JKPAPER.NS,Process Industries,Pulp & Paper
+JKSHAH.NS,Commercial Services,Miscellaneous Commercial Services
 JKTYRE.NS,Consumer Durables,Automotive Aftermarket
 JLHL.NS,Health Services,Hospital/Nursing Management
 JMA.NS,Producer Manufacturing,Auto Parts: OEM
@@ -1504,7 +1508,6 @@ KHAITANLTD.NS,Consumer Durables,Electronics/Appliances
 KHANDSE.NS,Finance,Investment Banks/Brokers
 KHAZANCHI.NS,Distribution Services,Wholesale Distributors
 KHERIAAUTO.NS,Producer Manufacturing,Industrial Machinery
-KHFM.NS,Commercial Services,Miscellaneous Commercial Services
 KICL.NS,Finance,Financial Conglomerates
 KILITCH.NS,Health Technology,Pharmaceuticals: Major
 KIMS.NS,Health Services,Hospital/Nursing Management
@@ -1684,6 +1687,7 @@ MAITHANALL.NS,Non-Energy Minerals,Other Metals/Minerals
 MAITREYA.NS,Health Services,Hospital/Nursing Management
 MAJESAUT.NS,Commercial Services,Miscellaneous Commercial Services
 MAKERSL.NS,Health Technology,Pharmaceuticals: Major
+MAKS.NS,Producer Manufacturing,Electrical Products
 MAL.NS,Non-Energy Minerals,Steel
 MALLCOM.NS,Consumer Non-Durables,Apparel/Footwear
 MALUPAPER.NS,Process Industries,Pulp & Paper
@@ -1694,7 +1698,6 @@ MANAKSIA.NS,Non-Energy Minerals,Steel
 MANAKSTEEL.NS,Non-Energy Minerals,Steel
 MANALIPETC.NS,Process Industries,Chemicals: Specialty
 MANAPPURAM.NS,Finance,Finance/Rental/Leasing
-MANAV.NS,Industrial Services,Engineering & Construction
 MANBA.NS,Finance,Finance/Rental/Leasing
 MANCREDIT.NS,Finance,Finance/Rental/Leasing
 MANDEEP.NS,Producer Manufacturing,Building Products
@@ -2068,7 +2071,6 @@ PARAGMILK.NS,Consumer Non-Durables,Food: Meat/Fish/Dairy
 PARAGON.NS,Process Industries,Chemicals: Major Diversified
 PARAMATRIX.NS,Technology Services,Packaged Software
 PARAMOUNT.NS,Process Industries,Textiles
-PARAMPARA.NS,Consumer Durables,Home Furnishings
 PARAS.NS,Electronic Technology,Aerospace & Defense
 PARASHLTH.NS,Health Services,Hospital/Nursing Management
 PARASPETRO.NS,Process Industries,Textiles
@@ -2131,6 +2133,7 @@ PIRAMALFIN.NS,Finance,Finance/Rental/Leasing
 PITTIENG.NS,Producer Manufacturing,Industrial Machinery
 PIXTRANS.NS,Producer Manufacturing,Miscellaneous Manufacturing
 PKTEA.NS,Process Industries,Agricultural Commodities/Milling
+PLADAINFO.NS,Commercial Services,Miscellaneous Commercial Services
 PLASTIBLEN.NS,Process Industries,Chemicals: Major Diversified
 PLATIND.NS,Process Industries,Chemicals: Major Diversified
 PLAZACABLE.NS,Producer Manufacturing,Electrical Products
@@ -2585,7 +2588,7 @@ SHRITECH.NS,Process Industries,Textiles
 SHRJAGP.NS,Process Industries,Textiles
 SHUBHLAXMI.NS,Consumer Durables,Other Consumer Specialties
 SHUBHSHREE.NS,Process Industries,Chemicals: Specialty
-SHUKRAPHAR.NS,Health Technology,Pharmaceuticals: Major
+SHUKRAMED.NS,Health Technology,Pharmaceuticals: Major
 SHYAMCENT.NS,Non-Energy Minerals,Steel
 SHYAMDHANI.NS,Consumer Non-Durables,Food: Major Diversified
 SHYAMMETL.NS,Producer Manufacturing,Metal Fabrication
@@ -2897,6 +2900,7 @@ TIINDIA.NS,Non-Energy Minerals,Steel
 TIJARIA.NS,Producer Manufacturing,Miscellaneous Manufacturing
 TIKONA.NS,Non-Energy Minerals,Steel
 TIL.NS,Producer Manufacturing,Trucks/Construction/Farm Machinery
+TIMESCAN.NS,Transportation,Air Freight/Couriers
 TIMETECHNO.NS,Process Industries,Containers/Packaging
 TIMEX.NS,Consumer Durables,Other Consumer Specialties
 TIMKEN.NS,Producer Manufacturing,Industrial Machinery
@@ -3054,9 +3058,9 @@ VENKEYS.NS,Process Industries,Agricultural Commodities/Milling
 VENTIVE.NS,Consumer Services,Hotels/Resorts/Cruise lines
 VENUSPIPES.NS,Non-Energy Minerals,Steel
 VENUSREM.NS,Health Technology,Pharmaceuticals: Major
+VERA.NS,Process Industries,Textiles
 VERANDA.NS,Commercial Services,Miscellaneous Commercial Services
 VERITAAS.NS,Commercial Services,Advertising/Marketing Services
-VERTEXPLUS.NS,Commercial Services,Miscellaneous Commercial Services
 VERTIS.NS,Miscellaneous,Investment Trusts/Mutual Funds
 VERTOZ.NS,Commercial Services,Advertising/Marketing Services
 VESUVIUS.NS,Non-Energy Minerals,Construction Materials
@@ -3096,7 +3100,6 @@ VINYLINDIA.NS,Distribution Services,Wholesale Distributors
 VIPCLOTHNG.NS,Consumer Non-Durables,Apparel/Footwear
 VIPIND.NS,Consumer Durables,Other Consumer Specialties
 VIPULLTD.NS,Finance,Real Estate Development
-VIRAT.NS,Consumer Non-Durables,Apparel/Footwear
 VIRINCHI.NS,Technology Services,Information Technology Services
 VIRTUALG.NS,Consumer Services,Other Consumer Services
 VISACHROME.NS,Non-Energy Minerals,Steel
