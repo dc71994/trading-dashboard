@@ -111,7 +111,6 @@ AGROPHOS.NS,Process Industries,Chemicals: Agricultural
 AGSTRA.NS,Commercial Services,Miscellaneous Commercial Services
 AGUL.NS,Non-Energy Minerals,Steel
 AHCL.NS,Health Technology,Pharmaceuticals: Major
-AHIMSA.NS,Process Industries,Containers/Packaging
 AHLADA.NS,Producer Manufacturing,Building Products
 AHLEAST.NS,Consumer Services,Hotels/Resorts/Cruise lines
 AHLUCONT.NS,Industrial Services,Engineering & Construction
@@ -2933,7 +2932,6 @@ TRANSCOR.NS,Commercial Services,Miscellaneous Commercial Services
 TRANSPEK.NS,Process Industries,Chemicals: Specialty
 TRANSRAILL.NS,Industrial Services,Engineering & Construction
 TRANSTEEL.NS,Producer Manufacturing,Office Equipment/Supplies
-TRANSWIND.NS,Industrial Services,Engineering & Construction
 TRANSWORLD.NS,Transportation,Marine Shipping
 TRAVELFOOD.NS,Consumer Services,Restaurants
 TREEHOUSE.NS,Consumer Services,Other Consumer Services
@@ -3110,7 +3108,6 @@ VISHAL.NS,Process Industries,Textiles
 VISHNU.NS,Process Industries,Chemicals: Specialty
 VISHNUINFR.NS,Non-Energy Minerals,Construction Materials
 VISHWARAJ.NS,Process Industries,Agricultural Commodities/Milling
-VISHWAS.NS,Process Industries,Agricultural Commodities/Milling
 VISL.NS,Non-Energy Minerals,Steel
 VITAL.NS,Process Industries,Chemicals: Specialty
 VIVIANA.NS,Industrial Services,Engineering & Construction
