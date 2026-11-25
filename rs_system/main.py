@@ -28,6 +28,9 @@ from .rs_engine import (
     find_launch_pad_stocks,
     find_reclaimed_10_sma_stocks,
     find_ipo_reclaimed_10_sma_stocks,
+    find_breakaway_gap_stocks,
+    find_gap_and_hold_stocks,
+    find_ipo_gap_stocks,
 )
 from .report import (
     export_all_stocks,
@@ -202,6 +205,9 @@ def main():
     launch_pad = find_launch_pad_stocks(stock_rs, universe)
     reclaimed_10_sma = find_reclaimed_10_sma_stocks(stock_rs, universe)
     ipo_reclaimed_10_sma = find_ipo_reclaimed_10_sma_stocks(stock_rs, universe)
+    breakaway_gaps = find_breakaway_gap_stocks(stock_rs, universe)
+    gap_and_hold = find_gap_and_hold_stocks(stock_rs, universe)
+    ipo_gaps = find_ipo_gap_stocks(stock_rs, universe)
 
     export_all_stocks(stock_rs)
     export_top_industries(industry_rs)
@@ -213,9 +219,22 @@ def main():
     launch_pad.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Launch_Pads_{date_stamp}.csv'), index=False)
     reclaimed_10_sma.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_10_SMA_Reclaims_{date_stamp}.csv'), index=False)
     ipo_reclaimed_10_sma.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_IPO_10_SMA_Reclaims_{date_stamp}.csv'), index=False)
+    breakaway_gaps.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Breakaway_Gaps_{date_stamp}.csv'), index=False)
+    gap_and_hold.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_Gap_And_Hold_{date_stamp}.csv'), index=False)
+    ipo_gaps.to_csv(os.path.join(config.OUTPUT_DIR, f'RS_IPO_Gaps_{date_stamp}.csv'), index=False)
 
     if not args.no_dashboard:
-        html_path = generate_dashboard(stock_rs, industry_rs, sector_rs, leaders, history_df=full_hist, sector_history_df=sec_full_hist, basing_df=basing, launch_pad_df=launch_pad, reclaimed_10_sma_df=reclaimed_10_sma, ipo_reclaimed_10_sma_df=ipo_reclaimed_10_sma, prices=prices)
+        html_path = generate_dashboard(
+            stock_rs, industry_rs, sector_rs, leaders,
+            history_df=full_hist, sector_history_df=sec_full_hist,
+            basing_df=basing, launch_pad_df=launch_pad,
+            reclaimed_10_sma_df=reclaimed_10_sma,
+            ipo_reclaimed_10_sma_df=ipo_reclaimed_10_sma,
+            breakaway_gaps_df=breakaway_gaps,
+            gap_and_hold_df=gap_and_hold,
+            ipo_gaps_df=ipo_gaps,
+            prices=prices
+        )
         print(f"  → {html_path}")
     else:
         print("  (HTML dashboard skipped)")

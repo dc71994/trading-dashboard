@@ -128,6 +128,71 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
                 vol_50d = df['Volume'].iloc[-50:].mean()
                 vol_dry_up = (vol_5d < (vol_50d * 0.6))
 
+        # --- Gap Analysis Metrics (Last 10 bars) ---
+        has_breakaway_gap = False
+        gap_days_ago = -1
+        gap_pct = 0.0
+        gap_day_low = 0.0
+        gap_rvol = 0.0
+        is_gap_and_hold = False
+        is_ipo_gap = False
+
+        if len(df) >= 15:
+            # Check for gap occurrence in recent 10 bars (from bar -1 to bar -10)
+            # A gap up occurs when Open[i] >= High[i-1] * 1.015 or Open[i] >= Close[i-1] * 1.025
+            vol_50_series = df['Volume'].rolling(window=min(len(df), 50), min_periods=10).mean()
+            
+            # Scan from most recent bar backwards
+            lookback_gap = min(10, len(df) - 1)
+            for i in range(1, lookback_gap + 1):
+                idx = len(df) - i
+                prev_idx = idx - 1
+                
+                bar_open = df['Open'].iloc[idx]
+                bar_close = df['Close'].iloc[idx]
+                bar_high = df['High'].iloc[idx]
+                bar_low = df['Low'].iloc[idx]
+                bar_vol = df['Volume'].iloc[idx]
+                
+                prev_close = df['Close'].iloc[prev_idx]
+                prev_high = df['High'].iloc[prev_idx]
+                
+                avg_v = vol_50_series.iloc[prev_idx] if prev_idx < len(vol_50_series) else df['Volume'].mean()
+                if avg_v <= 0 or pd.isna(avg_v):
+                    avg_v = 1.0
+                rvol = bar_vol / avg_v
+                
+                calc_gap = ((bar_open / prev_close) - 1) * 100 if prev_close > 0 else 0
+                
+                # Gap Up Criteria:
+                # 1. Gap size >= 2.5% (Open vs prev Close) or Open > prev High
+                # 2. Volume expansion: RVOL >= 1.8x
+                # 3. Closed well: Close >= Open * 0.985 and Close > prev_close
+                if calc_gap >= 2.5 and rvol >= 1.8 and bar_close > prev_close and (bar_high > bar_low):
+                    bar_candle_pct = (bar_close - bar_low) / (bar_high - bar_low)
+                    if bar_candle_pct >= 0.40: # closed in upper 60% of day's range
+                        gap_days_ago = i - 1  # 0 means today, 1 means yesterday, etc.
+                        gap_pct = calc_gap
+                        gap_day_low = bar_low
+                        gap_rvol = rvol
+                        
+                        # Breakaway Gap: happened in last 2 days (today or yesterday)
+                        if gap_days_ago <= 1:
+                            has_breakaway_gap = True
+                            
+                        # Gap & Hold: happened 2 to 10 days ago, and price has NOT undercut gap day low
+                        if gap_days_ago >= 2:
+                            subsequent_low = df['Low'].iloc[idx:].min()
+                            # Holds above gap day low (or within 1% buffer)
+                            if subsequent_low >= gap_day_low * 0.99 and current_price >= gap_day_low:
+                                is_gap_and_hold = True
+                                
+                        # IPO Gap: Listing bars 15 to 150, gap happened within last 10 days
+                        if 15 <= listing_bars <= 150 and (has_breakaway_gap or is_gap_and_hold):
+                            is_ipo_gap = True
+                            
+                        break # Found most recent prominent gap
+
         results.append({
             'Ticker': ticker,
             'Current_Price': current_price,
@@ -156,7 +221,14 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Days_Since_Peak': days_since_peak,
             'Max_Base_DD': max_base_dd,
             'Prior_Leg_Gain': prior_leg_gain,
-            'Vol_Dry_Up': vol_dry_up
+            'Vol_Dry_Up': vol_dry_up,
+            'Has_Breakaway_Gap': has_breakaway_gap,
+            'Is_Gap_And_Hold': is_gap_and_hold,
+            'Is_IPO_Gap': is_ipo_gap,
+            'Gap_Days_Ago': gap_days_ago,
+            'Gap_Pct': gap_pct,
+            'Gap_Day_Low': gap_day_low,
+            'Gap_RVOL': gap_rvol
         })
 
         
@@ -167,7 +239,8 @@ def calculate_stock_rs(prices: dict, benchmark: pd.Series) -> pd.DataFrame:
             'Ticker', 'Current_Price', 'High_52W', 'Low_52W', 'Pct_From_High', 'Pct_From_Low', 'Avg_Volume',
             'Return_1W', 'Return_1M', 'Return_3M', 'Return_6M',
             'RS_Composite', 'RS_Percentile',
-            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'SMA_50_Rising', 'SMA_200_Rising', 'Base_Low_Price', 'Listing_Bars', 'Listing_Day_Low', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up'
+            'SMA_10', 'EMA_10', 'EMA_20', 'SMA_50', 'SMA_100', 'SMA_200', 'SMA_50_Rising', 'SMA_200_Rising', 'Base_Low_Price', 'Listing_Bars', 'Listing_Day_Low', 'Reclaimed_10_SMA', 'Days_Since_Peak', 'Max_Base_DD', 'Prior_Leg_Gain', 'Vol_Dry_Up',
+            'Has_Breakaway_Gap', 'Is_Gap_And_Hold', 'Is_IPO_Gap', 'Gap_Days_Ago', 'Gap_Pct', 'Gap_Day_Low', 'Gap_RVOL'
         ])
         
     # Rank and calculate percentile (0-99)
@@ -538,4 +611,87 @@ def find_launch_pad_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd
     filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
 
     filtered = filtered.drop(columns=['MA_Max', 'MA_Min'])
+    return filtered
+
+
+def find_breakaway_gap_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds High Volume Breakaway / Institutional Gap Up stocks (occurred today or yesterday).
+    Criteria:
+    - Gap up >= 2.5% on Day 1
+    - Relative Volume >= 1.8x
+    - In an uptrend or Stage 2 structure: Price > 50 SMA (or within 2%), Price > 200 SMA (if available)
+    - Within 25% of 52-week high (not a deep downtrend dead-cat bounce)
+    """
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    if 'Has_Breakaway_Gap' not in merged.columns:
+        return pd.DataFrame()
+        
+    df = merged[merged['Has_Breakaway_Gap'] == True].copy()
+    if df.empty:
+        return df
+        
+    # Trend alignment: Above or within 2% of 50 SMA
+    trend_50 = df['SMA_50'].isna() | (df['Current_Price'] >= df['SMA_50'] * 0.98)
+    # Above 200 SMA if available
+    trend_200 = df['SMA_200'].isna() | (df['Current_Price'] >= df['SMA_200'] * 0.95)
+    # Proximity to 52W high: within 28% of 52W high
+    near_high = df['Pct_From_High'] >= -28.0
+    
+    filtered = df[trend_50 & trend_200 & near_high].copy()
+    filtered = filtered.sort_values(by=['Gap_Days_Ago', 'Gap_RVOL'], ascending=[True, False]).reset_index(drop=True)
+    return filtered
+
+
+def find_gap_and_hold_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds stocks that had a high-volume gap up 2 to 10 trading days ago and are now
+    orderly consolidating/holding above the gap-day low.
+    """
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    if 'Is_Gap_And_Hold' not in merged.columns:
+        return pd.DataFrame()
+        
+    df = merged[merged['Is_Gap_And_Hold'] == True].copy()
+    if df.empty:
+        return df
+        
+    # Above 50 SMA and 200 SMA
+    trend_50 = df['SMA_50'].isna() | (df['Current_Price'] >= df['SMA_50'] * 0.98)
+    trend_200 = df['SMA_200'].isna() | (df['Current_Price'] >= df['SMA_200'] * 0.95)
+    near_high = df['Pct_From_High'] >= -25.0
+    
+    filtered = df[trend_50 & trend_200 & near_high].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
+    return filtered
+
+
+def find_ipo_gap_stocks(stock_rs: pd.DataFrame, universe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Finds IPO / recent listing stocks (15 to 150 trading days) with an institutional gap up.
+    """
+    if stock_rs.empty or universe.empty:
+        return pd.DataFrame()
+        
+    merged = stock_rs.merge(universe[['Ticker', 'Sector', 'Industry']], on='Ticker', how='inner')
+    if 'Is_IPO_Gap' not in merged.columns:
+        return pd.DataFrame()
+        
+    df = merged[merged['Is_IPO_Gap'] == True].copy()
+    if df.empty:
+        return df
+        
+    # IPO Listing Age & support
+    ipo_age = (df['Listing_Bars'] >= 15) & (df['Listing_Bars'] <= 150)
+    floor_cond = df['Current_Price'] >= df['Listing_Day_Low']
+    near_high = df['Pct_From_High'] >= -25.0
+    
+    filtered = df[ipo_age & floor_cond & near_high].copy()
+    filtered = filtered.sort_values(by='RS_Percentile', ascending=False).reset_index(drop=True)
     return filtered

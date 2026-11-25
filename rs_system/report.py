@@ -131,6 +131,9 @@ def generate_dashboard(
     launch_pad_df: pd.DataFrame = None,
     reclaimed_10_sma_df: pd.DataFrame = None,
     ipo_reclaimed_10_sma_df: pd.DataFrame = None,
+    breakaway_gaps_df: pd.DataFrame = None,
+    gap_and_hold_df: pd.DataFrame = None,
+    ipo_gaps_df: pd.DataFrame = None,
     prices: dict = None,
 ) -> str:
     ensure_output_dir()
@@ -149,9 +152,12 @@ def generate_dashboard(
         sector_history_json = sector_history_df.to_json(orient="records")
 
     # ── Stock Candle & MA Data for Grid View ──
-    # Extract up to 250 bars (full 1 year) for candidates in Basing, Launchpad, and Reclaims
+    # Extract up to 250 bars (full 1 year) for candidates across setups
     candidate_tickers = set()
-    for df_cand in [basing_df, launch_pad_df, reclaimed_10_sma_df, ipo_reclaimed_10_sma_df]:
+    for df_cand in [
+        basing_df, launch_pad_df, reclaimed_10_sma_df, ipo_reclaimed_10_sma_df,
+        breakaway_gaps_df, gap_and_hold_df, ipo_gaps_df
+    ]:
         if df_cand is not None and not df_cand.empty and 'Ticker' in df_cand.columns:
             candidate_tickers.update(df_cand['Ticker'].dropna().tolist())
 
@@ -426,6 +432,132 @@ def generate_dashboard(
                     <div class="chart-card-meta">₹{_format_num(price)} · {listing_bars}d · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
                 </div>
                 <div class="chart-card-canvas" id="chart-iporeclaim10-{ticker_clean}"></div>
+            </div>"""
+
+    # ── Build Breakaway Gaps rows & cards ──
+    breakaway_gaps_rows = ""
+    breakaway_gaps_cards = ""
+    breakaway_gaps_count = 0
+    if breakaway_gaps_df is not None:
+        breakaway_gaps_count = len(breakaway_gaps_df)
+        for i, (_, row) in enumerate(breakaway_gaps_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
+            gap_pct = row.get('Gap_Pct', 0)
+            gap_rvol = row.get('Gap_RVOL', 0)
+            gap_days = int(row.get('Gap_Days_Ago', 0))
+            gap_time_str = "Today" if gap_days == 0 else f"{gap_days}d ago"
+            breakaway_gaps_rows += f"""
+            <tr data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{ind_name}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td style="color:var(--accent); font-weight:600;">+{gap_pct:.1f}% ({gap_time_str})</td>
+                <td style="color:#ffee58; font-family:var(--mono); font-weight:600;">{gap_rvol:.1f}x</td>
+                <td class="pct-high-cell" style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</td>
+                <td style="color:{_rs_color(row.get('Return_1M', 0), True)}">{_format_num(row.get('Return_1M', 0))}%</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
+            breakaway_gaps_cards += f"""
+            <div class="chart-card" data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)} · <span style="color:var(--accent);">Gap +{gap_pct:.1f}% ({gap_rvol:.1f}x)</span> · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
+                </div>
+                <div class="chart-card-canvas" id="chart-breakaway-{ticker_clean}"></div>
+            </div>"""
+
+    # ── Build Gap & Hold rows & cards ──
+    gap_and_hold_rows = ""
+    gap_and_hold_cards = ""
+    gap_and_hold_count = 0
+    if gap_and_hold_df is not None:
+        gap_and_hold_count = len(gap_and_hold_df)
+        for i, (_, row) in enumerate(gap_and_hold_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
+            gap_pct = row.get('Gap_Pct', 0)
+            gap_rvol = row.get('Gap_RVOL', 0)
+            gap_days = int(row.get('Gap_Days_Ago', 0))
+            gap_and_hold_rows += f"""
+            <tr data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{ind_name}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td style="color:var(--accent); font-weight:600;">+{gap_pct:.1f}% ({gap_days}d ago)</td>
+                <td style="color:#ffee58; font-family:var(--mono); font-weight:600;">{gap_rvol:.1f}x</td>
+                <td class="pct-high-cell" style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</td>
+                <td style="color:{_rs_color(row.get('Return_1M', 0), True)}">{_format_num(row.get('Return_1M', 0))}%</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
+            gap_and_hold_cards += f"""
+            <div class="chart-card" data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)} · <span style="color:var(--accent);">Held {gap_days}d (+{gap_pct:.1f}%)</span> · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
+                </div>
+                <div class="chart-card-canvas" id="chart-gaphold-{ticker_clean}"></div>
+            </div>"""
+
+    # ── Build IPO Gaps rows & cards ──
+    ipo_gaps_rows = ""
+    ipo_gaps_cards = ""
+    ipo_gaps_count = 0
+    if ipo_gaps_df is not None:
+        ipo_gaps_count = len(ipo_gaps_df)
+        for i, (_, row) in enumerate(ipo_gaps_df.iterrows()):
+            ticker_clean = str(row.get('Ticker', '—')).replace('.NS', '')
+            price = row.get('Current_Price', 0)
+            rs_val = int(row.get('RS_Percentile', 0))
+            pct_high = row.get('Pct_From_High', 0)
+            ind_name = row.get('Industry', 'Unknown')
+            gap_pct = row.get('Gap_Pct', 0)
+            gap_rvol = row.get('Gap_RVOL', 0)
+            listing_bars = int(row.get('Listing_Bars', 0))
+            gap_days = int(row.get('Gap_Days_Ago', 0))
+            gap_time_str = "Today" if gap_days == 0 else f"{gap_days}d ago"
+            ipo_gaps_rows += f"""
+            <tr data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <td class="rank-cell">{i + 1}</td>
+                <td class="sticky-col">{get_copy_html(ticker_clean)}</td>
+                <td class="industry-cell">{ind_name}</td>
+                <td>{row.get('Sector', '—')}</td>
+                <td>₹{_format_num(price)}</td>
+                <td>{listing_bars}d</td>
+                <td style="color:var(--accent); font-weight:600;">+{gap_pct:.1f}% ({gap_time_str})</td>
+                <td style="color:#ffee58; font-family:var(--mono); font-weight:600;">{gap_rvol:.1f}x</td>
+                <td class="pct-high-cell" style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</td>
+                <td class="rs-cell" style="color:{_rs_color(rs_val)}">{rs_val}</td>
+                <td>{_format_volume(row.get('Avg_Volume', 0))}</td>
+            </tr>"""
+            ipo_gaps_cards += f"""
+            <div class="chart-card" data-pct-from-high="{pct_high:.2f}" data-industry="{ind_name}" data-ticker="{ticker_clean}">
+                <div class="chart-card-header">
+                    <div class="chart-card-title">
+                        {get_copy_html(ticker_clean)}
+                        <span class="chart-card-rs">RS {rs_val}</span>
+                    </div>
+                    <div class="chart-card-meta">₹{_format_num(price)} · {listing_bars}d · <span style="color:var(--accent);">Gap +{gap_pct:.1f}%</span> · <span style="color:{_rs_color(pct_high, True)}">{_format_num(pct_high)}%</span></div>
+                </div>
+                <div class="chart-card-canvas" id="chart-ipogap-{ticker_clean}"></div>
             </div>"""
 
     # ── Assemble stats ──
@@ -730,6 +862,9 @@ def generate_dashboard(
     <button class="tab-btn" onclick="showTab('launchpad')" style="color:var(--accent);">// Launch Pads</button>
     <button class="tab-btn" onclick="showTab('reclaim10')" style="color:var(--accent);">// 10 SMA Reclaim</button>
     <button class="tab-btn" onclick="showTab('iporeclaim10')" style="color:var(--accent);">// IPO 10 SMA Reclaim</button>
+    <button class="tab-btn" onclick="showTab('breakaway')" style="color:#ffee58;">// Breakaway Gaps</button>
+    <button class="tab-btn" onclick="showTab('gaphold')" style="color:#ffee58;">// Gap & Hold</button>
+    <button class="tab-btn" onclick="showTab('ipogap')" style="color:#ffee58;">// IPO Gaps</button>
   </div>
   
   <!-- Tab: Industry Trend -->
@@ -1156,6 +1291,186 @@ def generate_dashboard(
     </div>
   </div>
 
+  <!-- Tab: Breakaway Gaps -->
+  <div id="tab-breakaway" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num" style="color:#ffee58; background:rgba(255,238,88,0.12);">09</span>
+          <span class="section-title">Breakaway / High-Volume Gap-Ups ({breakaway_gaps_count})</span>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('breakaway', 'table')" id="btn-view-breakaway-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('breakaway', 'grid')" id="btn-view-breakaway-grid">⊞ Chart Grid</button>
+          </div>
+          <div class="view-switch col-switch" id="col-switch-breakaway" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-breakaway">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-breakaway">3 View</button>
+          </div>
+          <select id="grid-ma-filter-breakaway" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-breakaway" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
+          <span id="breakaway-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-breakaway')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap" id="view-table-breakaway">
+        <table id="table-breakaway">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>Gap %</th>
+              <th>Gap RVOL</th>
+              <th>% From High</th>
+              <th>1M</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{breakaway_gaps_rows}</tbody>
+        </table>
+      </div>
+      <div class="chart-grid" id="view-grid-breakaway" style="display:none;">
+        {breakaway_gaps_cards}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Gap & Hold -->
+  <div id="tab-gaphold" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num" style="color:#ffee58; background:rgba(255,238,88,0.12);">10</span>
+          <span class="section-title">Gap & Hold / Consolidation ({gap_and_hold_count})</span>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('gaphold', 'table')" id="btn-view-gaphold-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('gaphold', 'grid')" id="btn-view-gaphold-grid">⊞ Chart Grid</button>
+          </div>
+          <div class="view-switch col-switch" id="col-switch-gaphold" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-gaphold">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-gaphold">3 View</button>
+          </div>
+          <select id="grid-ma-filter-gaphold" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-gaphold" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
+          <span id="gaphold-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-gaphold')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap" id="view-table-gaphold">
+        <table id="table-gaphold">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>Initial Gap</th>
+              <th>Gap RVOL</th>
+              <th>% From High</th>
+              <th>1M</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{gap_and_hold_rows}</tbody>
+        </table>
+      </div>
+      <div class="chart-grid" id="view-grid-gaphold" style="display:none;">
+        {gap_and_hold_cards}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: IPO Gaps -->
+  <div id="tab-ipogap" class="tab-panel">
+    <div class="section" style="margin-top: 24px;">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num" style="color:#ffee58; background:rgba(255,238,88,0.12);">11</span>
+          <span class="section-title">IPO Power Gaps ({ipo_gaps_count})</span>
+          <div class="view-switch" style="margin-left:12px;">
+            <button class="view-switch-btn active" onclick="switchView('ipogap', 'table')" id="btn-view-ipogap-table">≡ Table</button>
+            <button class="view-switch-btn" onclick="switchView('ipogap', 'grid')" id="btn-view-ipogap-grid">⊞ Chart Grid</button>
+          </div>
+          <div class="view-switch col-switch" id="col-switch-ipogap" style="margin-left:8px; display:none;">
+            <button class="view-switch-btn" onclick="updateGlobalCols(2)" id="btn-col-2-ipogap">2 View</button>
+            <button class="view-switch-btn active" onclick="updateGlobalCols(3)" id="btn-col-3-ipogap">3 View</button>
+          </div>
+          <select id="grid-ma-filter-ipogap" onchange="updateGlobalMA(this.value)" style="margin-left:10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="10-50">MAs: 10 EMA + 50 SMA</option>
+            <option value="10-20-50">MAs: 10 + 20 + 50</option>
+            <option value="all">MAs: All (10, 20, 50, 200)</option>
+            <option value="none">MAs: None (Candles Only)</option>
+          </select>
+          <select id="grid-bars-filter-ipogap" onchange="updateGlobalBars(this.value)" style="margin-left:8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:var(--mono); font-size:12px;">
+            <option value="120">Bars: 120 (~6M)</option>
+            <option value="60">Bars: 60 (~3M)</option>
+            <option value="180">Bars: 180 (~9M)</option>
+            <option value="250">Bars: 250 (1 Year)</option>
+          </select>
+          <span id="ipogap-insights" style="margin-left:16px; font-size:12px; color:var(--text-muted); font-family:var(--mono);"></span>
+        </div>
+        <button class="copy-all-btn" onclick="copyAllTickers(this, 'table-ipogap')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="table-wrap" id="view-table-ipogap">
+        <table id="table-ipogap">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ticker</th>
+              <th>Industry</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>Age</th>
+              <th>Gap %</th>
+              <th>Gap RVOL</th>
+              <th>% From High</th>
+              <th>RS</th>
+              <th>Avg Vol</th>
+            </tr>
+          </thead>
+          <tbody>{ipo_gaps_rows}</tbody>
+        </table>
+      </div>
+      <div class="chart-grid" id="view-grid-ipogap" style="display:none;">
+        {ipo_gaps_cards}
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1312,6 +1627,9 @@ def generate_dashboard(
     filterReclaim();
     filterIPOReclaim();
     updateInsights('table-launchpad', 'launchpad-insights');
+    updateInsights('table-breakaway', 'breakaway-insights');
+    updateInsights('table-gaphold', 'gaphold-insights');
+    updateInsights('table-ipogap', 'ipogap-insights');
   }}, 100);
 
   // ── Table sorting ──
@@ -1574,7 +1892,7 @@ def generate_dashboard(
 
   function updateGlobalCols(cols) {{
     currentGridCols = cols;
-    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10'].forEach(k => {{
+    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10', 'breakaway', 'gaphold', 'ipogap'].forEach(k => {{
       const grid = document.getElementById(`view-grid-${{k}}`);
       if (grid) {{
         if (cols === 2) {{
@@ -1631,7 +1949,7 @@ def generate_dashboard(
   function updateGlobalMA(val) {{
     currentMAMode = val;
     // sync all MA dropdowns across tabs
-    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10'].forEach(k => {{
+    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10', 'breakaway', 'gaphold', 'ipogap'].forEach(k => {{
       const sel = document.getElementById(`grid-ma-filter-${{k}}`);
       if (sel) sel.value = val;
     }});
@@ -1651,7 +1969,7 @@ def generate_dashboard(
     const count = parseInt(val, 10);
     currentBarsCount = count;
     // sync all bars dropdowns across tabs
-    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10'].forEach(k => {{
+    ['basing', 'launchpad', 'reclaim10', 'iporeclaim10', 'breakaway', 'gaphold', 'ipogap'].forEach(k => {{
       const sel = document.getElementById(`grid-bars-filter-${{k}}`);
       if (sel) sel.value = val;
     }});
