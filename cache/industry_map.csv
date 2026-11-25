@@ -490,7 +490,6 @@ BORORENEW.NS,Process Industries,Industrial Specialties
 BOROSCI.NS,Process Industries,Containers/Packaging
 BOSCHLTD.NS,Producer Manufacturing,Auto Parts: OEM
 BOSCH_HCIL.NS,Consumer Durables,Electronics/Appliances
-BOSS.NS,Producer Manufacturing,Industrial Machinery
 BPCL.NS,Energy Minerals,Oil Refining/Marketing
 BPL.NS,Electronic Technology,Telecommunications Equipment
 BPLPHARMA.NS,Health Technology,Pharmaceuticals: Major
@@ -746,6 +745,7 @@ DHARMAJ.NS,Process Industries,Chemicals: Agricultural
 DHATRE.NS,Non-Energy Minerals,Steel
 DHOOTTRANS.NS,Producer Manufacturing,Electrical Products
 DHRUV.NS,Industrial Services,Engineering & Construction
+DHTL.NS,Technology Services,Internet Software/Services
 DHUNINV.NS,Process Industries,Chemicals: Specialty
 DIACABS.NS,Producer Manufacturing,Electrical Products
 DIAMINESQ.NS,Process Industries,Chemicals: Major Diversified
@@ -844,7 +844,6 @@ ELGNZ.NS,Industrial Services,Engineering & Construction
 ELIN.NS,Electronic Technology,Electronic Production Equipment
 ELITECON.NS,Consumer Non-Durables,Tobacco
 ELLEN.NS,Process Industries,Chemicals: Specialty
-ELPROINTL.NS,Electronic Technology,Electronic Components
 EMAMILTD.NS,Consumer Non-Durables,Household/Personal Care
 EMAMIPAP.NS,Process Industries,Pulp & Paper
 EMAMIREAL.NS,Finance,Real Estate Development
@@ -1697,6 +1696,7 @@ MANAKSIA.NS,Non-Energy Minerals,Steel
 MANAKSTEEL.NS,Non-Energy Minerals,Steel
 MANALIPETC.NS,Process Industries,Chemicals: Specialty
 MANAPPURAM.NS,Finance,Finance/Rental/Leasing
+MANAV.NS,Industrial Services,Engineering & Construction
 MANBA.NS,Finance,Finance/Rental/Leasing
 MANCREDIT.NS,Finance,Finance/Rental/Leasing
 MANDEEP.NS,Producer Manufacturing,Building Products
@@ -1800,6 +1800,7 @@ MINDSPACE.RR.NS,Finance,Real Estate Investment Trusts
 MINDTECK.NS,Technology Services,Information Technology Services
 MIRZAINT.NS,Consumer Non-Durables,Apparel/Footwear
 MITCON.NS,Commercial Services,Miscellaneous Commercial Services
+MITSU.NS,Producer Manufacturing,Miscellaneous Manufacturing
 MITTAL.NS,Process Industries,Textiles
 MKEXIM.NS,Process Industries,Textiles
 MKJEWELS.NS,Consumer Durables,Other Consumer Specialties
@@ -2907,7 +2908,6 @@ TINNARUBR.NS,Process Industries,Industrial Specialties
 TIPSFILMS.NS,Consumer Services,Movies/Entertainment
 TIPSMUSIC.NS,Consumer Services,Movies/Entertainment
 TIRUMALCHM.NS,Process Industries,Chemicals: Specialty
-TIRUPATI.NS,Process Industries,Containers/Packaging
 TIRUPATIFL.NS,Producer Manufacturing,Industrial Conglomerates
 TITAGARH.NS,Producer Manufacturing,Trucks/Construction/Farm Machinery
 TITAN.NS,Consumer Durables,Other Consumer Specialties
@@ -3174,7 +3174,6 @@ WHIRLPOOL.NS,Consumer Durables,Electronics/Appliances
 WHITEFORCE.NS,Commercial Services,Personnel Services
 WINDLAS.NS,Health Technology,Pharmaceuticals: Major
 WINDMACHIN.NS,Producer Manufacturing,Industrial Machinery
-WINNY.NS,Commercial Services,Miscellaneous Commercial Services
 WINSOL.NS,Industrial Services,Engineering & Construction
 WIPL.NS,Non-Energy Minerals,Forest Products
 WIPRO.NS,Technology Services,Information Technology Services
