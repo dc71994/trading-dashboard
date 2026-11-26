@@ -658,6 +658,7 @@ CRIZAC.NS,Technology Services,Internet Software/Services
 CROMPTON.NS,Producer Manufacturing,Industrial Machinery
 CROWN.NS,Finance,Finance/Rental/Leasing
 CRSL.NS,Technology Services,Information Technology Services
+CRYSTALCP.NS,Process Industries,Chemicals: Agricultural
 CSBBANK.NS,Finance,Major Banks
 CSLFINANCE.NS,Finance,Investment Banks/Brokers
 CSM.NS,Technology Services,Information Technology Services
@@ -1849,6 +1850,7 @@ MPIMANIPAL.NS,Commercial Services,Commercial Printing/Forms
 MPSLTD.NS,Consumer Services,Publishing: Books/Magazines
 MRF.NS,Consumer Durables,Automotive Aftermarket
 MRIL.NS,Industrial Services,Engineering & Construction
+MROTEK.NS,Electronic Technology,Electronic Production Equipment
 MRPL.NS,Energy Minerals,Oil Refining/Marketing
 MSL.NS,Process Industries,Agricultural Commodities/Milling
 MSPL.NS,Non-Energy Minerals,Steel
@@ -2081,7 +2083,6 @@ PARNAXLAB.NS,Health Technology,Pharmaceuticals: Major
 PARSVNATH.NS,Finance,Real Estate Development
 PARTH.NS,Producer Manufacturing,Electrical Products
 PARTYCRUS.NS,Consumer Services,Other Consumer Services
-PARTYPP.E1.NS,Consumer Services,Other Consumer Services
 PASHUPATI.NS,Process Industries,Textiles
 PASUPTAC.NS,Process Industries,Textiles
 PATANJALI.NS,Process Industries,Agricultural Commodities/Milling
@@ -2985,7 +2986,6 @@ ULTRAMAR.NS,Process Industries,Chemicals: Specialty
 UMA.NS,Process Industries,Containers/Packaging
 UMAEXPORTS.NS,Distribution Services,Wholesale Distributors
 UMESLTD.NS,Producer Manufacturing,Metal Fabrication
-UMIYA_MRO.NS,Electronic Technology,Electronic Production Equipment
 UNICHEMLAB.NS,Health Technology,Pharmaceuticals: Major
 UNIDT.NS,Industrial Services,Oilfield Services/Equipment
 UNIECOM.NS,Technology Services,Packaged Software
@@ -3059,6 +3059,7 @@ VENUSREM.NS,Health Technology,Pharmaceuticals: Major
 VERA.NS,Process Industries,Textiles
 VERANDA.NS,Commercial Services,Miscellaneous Commercial Services
 VERITAAS.NS,Commercial Services,Advertising/Marketing Services
+VERTEXPLUS.NS,Commercial Services,Miscellaneous Commercial Services
 VERTIS.NS,Miscellaneous,Investment Trusts/Mutual Funds
 VERTOZ.NS,Commercial Services,Advertising/Marketing Services
 VESUVIUS.NS,Non-Energy Minerals,Construction Materials
@@ -3108,6 +3109,7 @@ VISHAL.NS,Process Industries,Textiles
 VISHNU.NS,Process Industries,Chemicals: Specialty
 VISHNUINFR.NS,Non-Energy Minerals,Construction Materials
 VISHWARAJ.NS,Process Industries,Agricultural Commodities/Milling
+VISHWAS.NS,Process Industries,Agricultural Commodities/Milling
 VISL.NS,Non-Energy Minerals,Steel
 VITAL.NS,Process Industries,Chemicals: Specialty
 VIVIANA.NS,Industrial Services,Engineering & Construction
@@ -3174,6 +3176,7 @@ WHIRLPOOL.NS,Consumer Durables,Electronics/Appliances
 WHITEFORCE.NS,Commercial Services,Personnel Services
 WINDLAS.NS,Health Technology,Pharmaceuticals: Major
 WINDMACHIN.NS,Producer Manufacturing,Industrial Machinery
+WINNY.NS,Commercial Services,Miscellaneous Commercial Services
 WINSOL.NS,Industrial Services,Engineering & Construction
 WIPL.NS,Non-Energy Minerals,Forest Products
 WIPRO.NS,Technology Services,Information Technology Services
